@@ -41,9 +41,10 @@ def check_tool_health(url):
 
 @app.route('/')
 def index():
-    page = int(request.args.get('page', 1))
-    limit = 50
-    tools = fetch_tools(page, limit)
+    # page = int(request.args.get('page', 1))
+    # limit = 50
+    # tools = fetch_tools(page, limit)
     # for tool in tools:
         # tool["health_status"] = check_tool_health(tool["url"])
-    return render_template('index.html', tools=tools, current_page=page)
+    # return render_template('index.html', tools=tools, current_page=page)
+    return render_template('test.html')
