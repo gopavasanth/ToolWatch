@@ -4,8 +4,8 @@ This is a Flask application that checks the health status of various tools and d
 
 ## Installation
 
-1. Clone the repository: `git clone <repository-url>`
-2. Navigate to the project directory: `cd <project-directory>`
+1. Clone the repository: `git clone https://github.com/gopavasanth/ToolWatch`
+2. Navigate to the project directory: `cd ToolWatch`
 3. Create a virtual environment: `python -m venv venv`
 4. Activate the virtual environment:
    - For Windows: `venv\Scripts\activate`
