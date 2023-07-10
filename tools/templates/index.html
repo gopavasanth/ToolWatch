@@ -1,8 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ToolWatch</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <title>ToolWatch</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    button {
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -22,147 +37,189 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <h1>Tool's Status</h1>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Tool Name</th>
-                    <th>Tool URL</th>
-                    <th>Health Status</th>
-                    <th>Last Checked</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for tool in tools %}
-                <tr>
-                    <td>{{ tool.name }}</td>
-                    <td><a href="{{ tool.url }}">{{ tool.url }}</a></td>
-                    <td>
-                        {% if tool.health_status == 'Loading...' %}
-                            <span class="text-muted">Loading...</span>
-                        {% elif tool.health_status == 'Healthy' %}
-                            <span class="badge badge-success">{{ tool.health_status }}</span>
-                        {% else %}
-                            <span class="badge badge-danger">{{ tool.health_status }}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ tool.last_checked }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+  <div class="container mt-4">
+    <table id="resultTable" class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Tool URL</th>
+          <th>Health Status</th>
+          <th>Last check</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <nav aria-label="Pagination">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" id="prevButton">
+          <a class="page-link" href="#" tabindex="-1">Previous</a>
+        </li>
+        <li class="page-item" id="nextButton">
+          <a class="page-link" href="#">Next</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
 
-        {% if tools.paginator %}
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    {% if tools.paginator.has_prev %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for('index', page=tools.paginator.prev_num) }}" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" aria-label="Previous">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                    {% endif %}
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
+    const API_URL = 'https://hay.toolforge.org/directory/api.php';
+    const ROWS_PER_PAGE = 10; // Number of rows to display per page
 
-                    {% for page in tools.paginator.iter_pages() %}
-                        {% if page %}
-                            {% if page == tools.paginator.page %}
-                                <li class="page-item active">
-                                    <a class="page-link" href="{{ url_for('index', page=page) }}">{{ page }}</a>
-                                </li>
-                            {% else %}
-                                <li class="page-item">
-                                    <a class="page-link" href="{{ url_for('index', page=page) }}">{{ page }}</a>
-                                </li>
-                            {% endif %}
-                        {% else %}
-                            <li class="page-item disabled">
-                                <span class="page-link">&hellip;</span>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
+    let currentPage = 1;
+    let data = [];
 
-                    {% if tools.paginator.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="{{ url_for('index', page=tools.paginator.next_num) }}" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" aria-label="Next">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
-    </div>
+    const sortingState = {
+      name: null,
+      toolUrl: null,
+      healthStatus: null,
+      lastCheck: null
+    };
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            var numTools = {{ tools.total }};
-            var loadedTools = {{ tools.items|length }};
+    const tableHeaders = document.querySelectorAll('#resultTable th');
 
-            function updateProgress() {
-                var loadingPercentage = (loadedTools / numTools) * 100;
-                $('.progress-bar').css('width', loadingPercentage + '%');
-                $('.progress-bar').text(loadingPercentage + '%');
-            }
+    tableHeaders.forEach(header => {
+      header.addEventListener('click', () => {
+        const column = header.dataset.column;
+        sortTable(column);
+      });
+    });
 
-            function updateToolStatus(index, status) {
-                var toolStatusElement = $('#tool-status-' + index);
-                if (status === 'Healthy') {
-                    toolStatusElement.removeClass('text-muted');
-                    toolStatusElement.addClass('badge-success');
-                } else {
-                    toolStatusElement.removeClass('text-muted');
-                    toolStatusElement.addClass('badge-danger');
-                }
-                toolStatusElement.text(status);
-            }
+    function sortTable(column) {
+      const currentSortingState = sortingState[column];
+      let sortedData;
 
-            {% for tool in tools.items %}
-                $.ajax({
-                    url: "{{ tool.url }}",
-                    type: "GET",
-                    success: function(response) {
-                        loadedTools++;
-                        updateProgress();
-                        updateToolStatus({{ loop.index0 }}, 'Healthy');
-                    },
-                    error: function(error) {
-                        loadedTools++;
-                        updateProgress();
-                        updateToolStatus({{ loop.index0 }}, 'Unhealthy');
-                    },
-                    complete: function() {
-                        if (loadedTools === numTools) {
-                            $('.progress').hide();
-                        }
-                    }
-                });
-            {% endfor %}
+      if (currentSortingState === 'asc') {
+        sortedData = data.sort((a, b) => (a[column] > b[column] ? -1 : 1));
+        sortingState[column] = 'desc';
+      } else {
+        sortedData = data.sort((a, b) => (a[column] > b[column] ? 1 : -1));
+        sortingState[column] = 'asc';
+      }
+
+      performHealthCheck(currentPage);
+    }
+
+    // Fetch data from the API using the CORS Anywhere proxy
+    function fetchData() {
+  fetch(PROXY_URL + API_URL)
+    .then(response => response.json())
+    .then(responseData => {
+      data = responseData;
+      sortingState.name = 'asc'; // Set initial sorting state for the 'Name' column
+      performHealthCheck(currentPage);
+    })
+    .catch(error => {
+      // console.error('Error:', error);
+      // displayError('An error occurred while fetching the data.');
+    });
+}
+
+    // Perform health check for each tool
+    function performHealthCheck(pageNumber) {
+      const startIndex = (pageNumber - 1) * ROWS_PER_PAGE;
+      const endIndex = startIndex + ROWS_PER_PAGE;
+      const pageData = data.slice(startIndex, endIndex);
+
+      const promises = pageData.map(item => checkToolHealth(item));
+      Promise.all(promises)
+        .then(checkedData => {
+          displayPage(checkedData);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          displayError('An error occurred while performing the health check.');
         });
-    </script>
-    <style>
-        .progress {
-            height: 30px;
-            margin-bottom: 20px;
-        }
-        .progress-bar {
-            transition: width 0.3s ease-in-out;
-        }
-    </style>
+    }
+
+    function checkToolHealth(tool) {
+  return fetch(PROXY_URL + tool.url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Tool is unavailable');
+      }
+      return response;
+    })
+    .then(response => ({
+      ...tool,
+      healthStatus: 'Available',
+      healthCheckDateTime: new Date().toISOString(),
+      healthStatusClass: 'badge badge-success' // Green label for available tools
+    }))
+    .catch(error => ({
+      ...tool,
+      healthStatus: 'Unavailable',
+      healthCheckDateTime: new Date().toISOString(),
+      healthStatusClass: 'badge badge-danger' // Red label for unavailable tools
+    }));
+}
+
+// Display a specific page of data
+function displayPage(pageData) {
+  const tableBody = document.querySelector('#resultTable tbody');
+  tableBody.innerHTML = '';
+
+  pageData.forEach(item => {
+    const row = document.createElement('tr');
+    const toolURL = `${item.name}.toolforge.org`;
+
+    const healthStatusClass = item.healthStatusClass || ''; // Get the health status class
+
+    row.innerHTML = `
+      <td>${item.name}</td>
+      <td><a href="https://${toolURL}">${toolURL}</a></td>
+      <td><span class="${healthStatusClass}">${item.healthStatus}</span></td>
+      <td>${item.healthCheckDateTime}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+
+  // Enable/disable pagination buttons based on the current page
+  const prevButton = document.querySelector('#prevButton');
+  const nextButton = document.querySelector('#nextButton');
+  prevButton.classList.toggle('disabled', currentPage === 1);
+  nextButton.classList.toggle('disabled', currentPage === getTotalPages());
+}
+
+
+    // Display error message in the table
+    function displayError(errorMessage) {
+      const tableBody = document.querySelector('#resultTable tbody');
+      tableBody.innerHTML = '';
+
+      const errorRow = document.createElement('tr');
+      errorRow.innerHTML = `
+        <td colspan="4" style="text-align: center; color: red;">${errorMessage}</td>
+      `;
+      tableBody.appendChild(errorRow);
+    }
+
+    // Get the total number of pages based on the data length
+    function getTotalPages() {
+      return Math.ceil(data.length / ROWS_PER_PAGE);
+    }
+
+    // Event listener for previous page button
+    const prevButton = document.querySelector('#prevButton');
+    prevButton.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        performHealthCheck(currentPage);
+      }
+    });
+
+    // Event listener for next page button
+    const nextButton = document.querySelector('#nextButton');
+    nextButton.addEventListener('click', () => {
+      if (currentPage < getTotalPages()) {
+        currentPage++;
+        performHealthCheck(currentPage);
+      }
+    });
+
+    // Fetch data when the page loads
+    fetchData();
+  </script>
 </body>
 </html>
-    

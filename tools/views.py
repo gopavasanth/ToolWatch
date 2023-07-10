@@ -1,7 +1,7 @@
 import requests
 from flask import render_template, request
 from tools import app
-
+from concurrent.futures import ThreadPoolExecutor
 
 def fetch_tools(page, limit):
     url = "https://hay.toolforge.org/directory/api.php"
@@ -13,17 +13,33 @@ def fetch_tools(page, limit):
     if response.status_code == 200:
         tools_data = response.json()
         tools = []
-        for tool_data in tools_data:
-            tool = {
-                "name": tool_data["name"],
-                "url": f"http://{tool_data['name']}.toolforge.org/",
-                "health_status": "Loading...",
-                "last_checked": None
-            }
-            tools.append(tool)
+
+        # Create a ThreadPoolExecutor to perform health checks concurrently
+        with ThreadPoolExecutor() as executor:
+            futures = []
+
+            # Schedule health check for each tool
+            for tool_data in tools_data:
+                tool = {
+                    "name": tool_data["name"],
+                    "url": f"https://{tool_data['name']}.toolforge.org/",
+                    "health_status": "Loading...",
+                    "last_checked": None
+                }
+                tools.append(tool)
+
+                # Schedule health check for the current tool
+                future = executor.submit(check_tool_health, tool["url"])
+                futures.append((tool, future))
+
+            # Retrieve the health check results
+            for tool, future in futures:
+                tool["health_status"] = future.result()
+
         return tools
     else:
         return []
+
 
 
 def check_tool_health(url):
@@ -41,10 +57,7 @@ def check_tool_health(url):
 
 @app.route('/')
 def index():
-    # page = int(request.args.get('page', 1))
-    # limit = 50
-    # tools = fetch_tools(page, limit)
-    # for tool in tools:
-        # tool["health_status"] = check_tool_health(tool["url"])
-    # return render_template('index.html', tools=tools, current_page=page)
-    return render_template('test.html')
+    page = int(request.args.get('page', 1))
+    limit = 50
+    tools = fetch_tools(page, limit)
+    return render_template('index.html', tools=tools, current_page=page)
