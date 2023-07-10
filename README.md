@@ -1,6 +1,7 @@
-# Tool Health Status Application
+# ToolWatch Status Application
 
-This is a Flask application that checks the health status of various tools and displays them in a user-friendly UI.
+ToolWatch checks the health status of various tools and displays them in a user-friendly UI.
+More at: https://phabricator.wikimedia.org/T341379
 
 ## Installation
 
