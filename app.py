@@ -53,6 +53,10 @@ def fetch_and_store_data():
         isExisting = session.query(Tool).filter_by(name=tool.name).first()
         if not isExisting:
             session.add(tool)
+        else:
+            # delete the existing tool and add the new one
+            session.delete(isExisting)
+            session.add(tool)
     session.commit()
 
 scheduler = BackgroundScheduler()
