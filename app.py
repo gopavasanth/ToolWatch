@@ -2,6 +2,7 @@ from flask import Flask, render_template
 import requests
 from sqlalchemy import create_engine, Column, String, Integer
 from sqlalchemy.orm import sessionmaker, declarative_base  # Import declarative_base from sqlalchemy.orm
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tools.db'
@@ -48,11 +49,17 @@ def fetch_and_store_data():
             technology_used=', '.join(tool_data.get('technology_used', [])),  # Use .get() to handle missing keys
             bugtracker_url=tool_data.get('bugtracker_url', '')  # Use .get() to handle missing keys
         )
-        session.add(tool)
+
+        isExisting = session.query(Tool).filter_by(name=tool.name).first()
+        if not isExisting:
+            session.add(tool)
     session.commit()
 
+scheduler = BackgroundScheduler()
 
 if __name__ == '__main__':
     Base.metadata.create_all(engine)
     fetch_and_store_data()
+    scheduler.add_job(fetch_and_store_data, 'interval', hours=1)
+    scheduler.start()
     app.run(debug=True)
