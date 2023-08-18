@@ -15,7 +15,7 @@ More at: https://phabricator.wikimedia.org/T341379
 
 ## Usage
 
-1. Run the Flask app: `python main.py`
+1. Run the Flask app: `python app.py`
 2. Open your web browser and visit `http://localhost:5000` to view the tool health status.
 
 ## Directory Structure
