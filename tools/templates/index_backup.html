@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ToolWatch</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      button {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container">
+        <a class="navbar-brand" href="#">ToolWatch</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-toggle="collapse"
+          data-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="{{ url_for('index', page=1) }}"
+                >Refresh <span class="sr-only">(current)</span></a
+              >
+            </li>
+            <!-- Add more navigation items as needed -->
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mt-4">
+      <div class="form-group">
+        <input
+          type="text"
+          id="searchInput"
+          class="form-control"
+          placeholder="Search by Name"
+        />
+        <button
+          id="searchButton"
+          class="btn btn-primary mt-2"
+          style="float: right"
+        >
+          Search
+        </button>
+      </div>
+      <br />
+      <table id="resultTable" class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Tool URL</th>
+            <th>Health Status</th>
+            <th>Last check</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <nav aria-label="Pagination">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" id="prevButton">
+            <a class="page-link" href="#" tabindex="-1">Previous</a>
+          </li>
+          <li class="page-item" id="nextButton">
+            <a class="page-link" href="#">Next</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      const PROXY_URL = "https://cors-anywhere.herokuapp.com/";
+      const API_URL =
+        "https://toolsadmin.wikimedia.org/tools/toolinfo/v1.2/toolinfo.json"; // New API URL
+      const ROWS_PER_PAGE = 10; // Number of rows to display per page
+
+      let currentPage = 1;
+      let data = [];
+
+      const sortingState = {
+        name: null,
+        toolUrl: null,
+        healthStatus: null,
+        lastCheck: null,
+      };
+
+      const tableHeaders = document.querySelectorAll("#resultTable th");
+
+      tableHeaders.forEach((header) => {
+        header.addEventListener("click", () => {
+          const column = header.dataset.column;
+          sortTable(column);
+        });
+      });
+
+      function sortTable(column) {
+        const currentSortingState = sortingState[column];
+        let sortedData;
+
+        if (currentSortingState === "asc") {
+          sortedData = data.sort((a, b) => (a[column] > b[column] ? -1 : 1));
+          sortingState[column] = "desc";
+        } else {
+          sortedData = data.sort((a, b) => (a[column] > b[column] ? 1 : -1));
+          sortingState[column] = "asc";
+        }
+
+        performHealthCheck(currentPage);
+      }
+
+      // Fetch data from the API using the CORS Anywhere proxy
+      function fetchData() {
+        fetch(PROXY_URL + API_URL)
+          .then((response) => response.json())
+          .then((responseData) => {
+            data = responseData;
+            sortingState.name = "asc"; // Set initial sorting state for the 'Name' column
+            performHealthCheck(currentPage);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            displayError("An error occurred while fetching the data.");
+          });
+      }
+
+      // Perform health check for each tool
+      function performHealthCheck(pageNumber) {
+        const startIndex = (pageNumber - 1) * ROWS_PER_PAGE;
+        const endIndex = startIndex + ROWS_PER_PAGE;
+        const pageData = data.slice(startIndex, endIndex);
+
+        const promises = pageData.map((item) => checkToolHealth(item));
+        Promise.all(promises)
+          .then((checkedData) => {
+            displayPage(checkedData);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            displayError(
+              "An error occurred while performing the health check."
+            );
+          });
+      }
+
+      function checkToolHealth(tool) {
+        return fetch(PROXY_URL + tool.url)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Tool is unavailable");
+            }
+            return response;
+          })
+          .then((response) => ({
+            ...tool,
+            healthStatus: "Available",
+            healthCheckDateTime: new Date().toISOString(),
+            healthStatusClass: "badge badge-success", // Green label for available tools
+          }))
+          .catch((error) => ({
+            ...tool,
+            healthStatus: "Unavailable",
+            healthCheckDateTime: new Date().toISOString(),
+            healthStatusClass: "badge badge-danger", // Red label for unavailable tools
+          }));
+      }
+
+      // Display a specific page of data
+      function displayPage(pageData) {
+        const tableBody = document.querySelector("#resultTable tbody");
+        tableBody.innerHTML = "";
+
+        pageData.forEach((item) => {
+          const row = document.createElement("tr");
+          const toolURL = `${item.name}.toolforge.org`;
+
+          const healthStatusClass = item.healthStatusClass || ""; // Get the health status class
+
+          row.innerHTML = `
+      <td>${item.name}</td>
+      <td><a href="https://${toolURL}">${toolURL}</a></td>
+      <td><span class="${healthStatusClass}">${item.healthStatus}</span></td>
+      <td>${item.healthCheckDateTime}</td>
+    `;
+          tableBody.appendChild(row);
+        });
+
+        // Enable/disable pagination buttons based on the current page
+        const prevButton = document.querySelector("#prevButton");
+        const nextButton = document.querySelector("#nextButton");
+        prevButton.classList.toggle("disabled", currentPage === 1);
+        nextButton.classList.toggle(
+          "disabled",
+          currentPage === getTotalPages()
+        );
+      }
+
+      // Display error message in the table
+      function displayError(errorMessage) {
+        const tableBody = document.querySelector("#resultTable tbody");
+        tableBody.innerHTML = "";
+
+        const errorRow = document.createElement("tr");
+        errorRow.innerHTML = `
+        <td colspan="4" style="text-align: center; color: red;">${errorMessage}</td>
+      `;
+        tableBody.appendChild(errorRow);
+      }
+
+      // Get the total number of pages based on the data length
+      function getTotalPages() {
+        return Math.ceil(data.length / ROWS_PER_PAGE);
+      }
+
+      // Event listener for previous page button
+      const prevButton = document.querySelector("#prevButton");
+      prevButton.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          performHealthCheck(currentPage);
+        }
+      });
+
+      // Event listener for next page button
+      const nextButton = document.querySelector("#nextButton");
+      nextButton.addEventListener("click", () => {
+        if (currentPage < getTotalPages()) {
+          currentPage++;
+          performHealthCheck(currentPage);
+        }
+      });
+
+      // Fetch data when the page loads
+      fetchData();
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.querySelector("#searchInput");
+        const searchButton = document.querySelector("#searchButton");
+
+        searchButton.addEventListener("click", () => {
+          const searchQuery = searchInput.value.trim().toLowerCase();
+          if (searchQuery) {
+            const filteredData = data.filter((item) =>
+              item.name.toLowerCase().includes(searchQuery)
+            );
+            displayPage(filteredData);
+          } else {
+            performHealthCheck(currentPage);
+          }
+        });
+
+        // ... (your existing script code) ...
+      });
+    </script>
+  </body>
+</html>
