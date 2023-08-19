@@ -17,6 +17,8 @@
             <th>Title</th>
             <th>Description</th>
             <th>Author</th>
+            <th>Health</th>
+            <th>Timestamp</th>
           </tr>
         </thead>
         <tbody>
@@ -26,6 +28,8 @@
             <td>{{ tool.title }}</td>
             <td>{{ tool.description }}</td>
             <td>{{ tool.author }}</td>
+            <td>{{ tool.health_status }}</td>
+            <td>{{ tool.last_checked }}</td>
           </tr>
           {% endfor %}
         </tbody>

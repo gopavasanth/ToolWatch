@@ -21,6 +21,8 @@
             <th>Name</th>
             <th>Title</th>
             <th>Author</th>
+            <th>Health</th>
+            <th>Timestamp</th>
           </tr>
         </thead>
         <tbody>
@@ -33,6 +35,12 @@
             </td>
             <td>{{ tool.title }}</td>
             <td>{{ tool.author }}</td>
+            {% if tool.health_status == True %}
+            <td> <div class="badge badge-success">Available</div></td>
+            {% else %}
+            <td><div class="badge badge-danger">Unavailable</div></td>
+            {% endif %}
+            <td>{{ tool.last_checked }}</td>
           </tr>
           {% endfor %}
         </tbody>
