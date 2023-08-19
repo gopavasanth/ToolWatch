@@ -2,7 +2,9 @@ from flask import Flask, render_template
 import requests
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, TIMESTAMP 
 from sqlalchemy.orm import sessionmaker, declarative_base  # Import declarative_base from sqlalchemy.orm
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.background import BackgroundScheduler as Scheduler
+import asyncio
+import datetime
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tools.db'
@@ -51,18 +53,9 @@ def fetch_and_store_data():
             technology_used=', '.join(tool_data.get('technology_used', [])),  # Use .get() to handle missing keys
             bugtracker_url=tool_data.get('bugtracker_url', '')  # Use .get() to handle missing keys
         )
-
-        isExisting = session.query(Tool).filter_by(name=tool.name).first()
-        if not isExisting:
-            session.add(tool)
-        else:
-            # delete the existing tool and add the new one
-            session.delete(isExisting)
-            session.add(tool)
+        session.add(tool)
     session.commit()
 
-
-scheduler = BackgroundScheduler()
 def sync_get(url):
     try:
         print( f'[*] Fetching url {url}' )
@@ -103,7 +96,6 @@ def ping_every_30_minutes():
 if __name__ == '__main__':
     Base.metadata.create_all(engine)
     fetch_and_store_data()
-    scheduler.add_job(fetch_and_store_data, 'interval', hours=1)
     scheduler = Scheduler()
     scheduler.add_job(id='Scheduled task', func=ping_every_30_minutes, trigger='interval', minutes=30)
     scheduler.start()
