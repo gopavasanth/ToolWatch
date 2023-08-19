@@ -24,26 +24,35 @@ def fetch_and_store_data():
     API_URL = "https://toolsadmin.wikimedia.org/tools/toolinfo/v1.2/toolinfo.json"
     response = requests.get(API_URL)
     data = response.json()
-
     session = Session()
-    for tool_data in data:
-        tool = Tool(
-            name=tool_data['name'],
-            title=tool_data['title'],
-            description=tool_data['description'],
-            url=tool_data['url'],
-            keywords=tool_data.get('keywords', ''),  # Use .get() to handle missing keys
-            author=tool_data['author'][0]['name'],
-            repository=tool_data.get('repository', ''),  # Use .get() to handle missing keys
-            license=tool_data.get('license', ''),  # Use .get() to handle missing keys
-            technology_used=', '.join(tool_data.get('technology_used', [])),  # Use .get() to handle missing keys
-            bugtracker_url=tool_data.get('bugtracker_url', '')  # Use .get() to handle missing keys
-        )
-        session.add(tool)
+    page_limit = 50
+    total_pages = len(data) // page_limit
+    for page in range(1, total_pages + 1):
+        start = (page - 1) * page_limit
+        end = page * page_limit
+        page_data = data[start:end]
+
+        for tool_data in page_data:
+            tool = Tool(
+                name=tool_data['name'],
+                title=tool_data['title'],
+                description=tool_data['description'],
+                url=tool_data['url'],
+                keywords=tool_data.get('keywords', ''),  # Use .get() to handle missing keys
+                author=tool_data['author'][0]['name'],
+                repository=tool_data.get('repository', ''),  # Use .get() to handle missing keys
+                license=tool_data.get('license', ''),  # Use .get() to handle missing keys
+                technology_used=', '.join(tool_data.get('technology_used', [])),  # Use .get() to handle missing keys
+                bugtracker_url=tool_data.get('bugtracker_url', ''),  # Use .get() to handle missing keys
+                page_num = page,
+                total_pages = total_pages
+            )
+            session.add(tool)
     session.commit()
 
 
 if __name__ == '__main__':
+    print("Fetching and storing data...")
     Base.metadata.create_all(engine)
     fetch_and_store_data()
     app.run(debug=True)

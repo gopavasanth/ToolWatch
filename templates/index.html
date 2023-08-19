@@ -87,7 +87,32 @@
         </div>
       </div>
     </nav>
-
+    <div>
+      <form
+        action="{{ url_for('search') }}"
+        method="GET"
+        style="display: flex; padding: 15px; justify-content: center"
+      >
+        <div class="form-outline" style="width: 75vw">
+          <input
+            type="search"
+            id="search"
+            name="search"
+            class="form-control"
+            placeholder="&#128270; name: tool_name"
+            `{%
+            if
+            search_term
+            %}
+            value="{{ search_term }}"
+            {%
+            endif
+            %}`
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+    </div>
     <div class="container mt-4">
       <div class="alert alert-primary" role="alert">
         Note: URLs that do not have a <code>parsed_url.netloc</code> of
@@ -132,7 +157,24 @@
           {% endfor %}
         </tbody>
       </table>
+      <div
+        style="
+          margin-bottom: 30px;
+          display: flex;
+          justify-content: space-between;
+        "
+      >
+        <div>{{curr_page}} / {{total_pages}}</div>
+        <div>
+          {% if curr_page > 1 %}
+          <a href="{{ url_for('index', page=curr_page-1) }}">Previous</a>
+          {% endif %} {% if curr_page < total_pages %}
+          <a href="{{ url_for('index', page=curr_page+1) }}">Next</a>
+          {% endif %}
+        </div>
+      </div>
     </div>
+
     <!-- Add Bootstrap JS scripts at the end of the body -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
