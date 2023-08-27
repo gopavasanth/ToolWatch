@@ -44,6 +44,11 @@
     </nav>
 
     <div class="container mt-4">
+
+      <div class="alert alert-primary" role="alert">
+        Note: URLs that do not have a <code>parsed_url.netloc</code> of <code>*.toolforge.org</code> are marked as unavailable.
+      </div>
+
       <table class="table table-striped" style="table-layout: fixed">
         <thead>
           <tr>
@@ -57,9 +62,10 @@
         <tbody>
           {% for tool in tools %}
           <tr>
+            {% if was_crawled.pop(0) == True %}
             <td>
-              <a href="https://{{ tool.name }}.toolforge.org" target="_blank">
-                {{ tool.name }}.toolforge.org
+              <a href="{{ tool.url }}" target="_blank">
+                {{ tool.url }}
               </a>
             </td>
             <td>{{ tool.title }}</td>
@@ -72,6 +78,7 @@
               {% endif %}
             </td>
             <td>{{ tool.last_checked }}</td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>

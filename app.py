@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 import requests
-from model import Session, Tool, Base, engine 
+from model import Session, Tool, Base, engine
+from urllib.parse import urlparse 
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tools.db'
@@ -9,7 +10,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tools.db'
 def index():
     session = Session()
     tools = session.query(Tool).all()
-    return render_template('index.html', tools=tools)
+    was_crawled = []
+    for tool in tools:
+        url_parsed = urlparse(tool.url)
+        if url_parsed.hostname != None and 'toolforge.org' in url_parsed.hostname :
+            was_crawled.append(True)
+        else:
+            was_crawled.append(False)
+    return render_template('index.html', tools=tools, was_crawled=was_crawled)
 
 def fetch_and_store_data():
     API_URL = "https://toolsadmin.wikimedia.org/tools/toolinfo/v1.2/toolinfo.json"
