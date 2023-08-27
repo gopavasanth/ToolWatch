@@ -11,7 +11,7 @@ def sync_get(url):
     try:
         print( f'[*] Fetching url {url}' )
         response = requests.head(url, timeout=5)
-        if response.status_code > 200 and response.status_code < 399:
+        if response.status_code >= 200 and response.status_code < 399:
             return True
         else:
             return False
