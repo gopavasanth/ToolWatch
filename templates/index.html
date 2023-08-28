@@ -21,7 +21,7 @@
         class="container"
         style="font-family: 'Courier New', Courier, monospace"
       >
-        <a class="navbar-brand" href="#">ToolWatch</a>
+        <a class="navbar-brand" href="/">ToolWatch</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -132,7 +132,7 @@
         <tbody>
           {% for tool in tools %}
           <tr>
-            {% if was_crawled.pop(0) == True %}
+            {% if was_crawled and was_crawled.pop(0) == True %}
             <td>
               <a
                 href="{{ tool.url }}"
