@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template
 import requests
 from model import Session, Tool, Base, engine
