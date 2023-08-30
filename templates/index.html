@@ -34,9 +34,9 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item disabled">
-              <a class="nav-link" href="{{ url_for('index') }}"
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link disabled" href="{{ url_for('index') }}"
                 >Next crawl in
                 <span class="header-timer-space"> 00h 00m 00s</span></a
               >
@@ -72,12 +72,11 @@
                     tt = tomorrow.setDate(tomorrow.getDate() + 1);
                   }
                 }, 1000);
-                //document.querySelector('.header-timer-space').innerHTML = new Date(tt).toLocaleString()
               </script>
             </li>
-            <li class="nav-item active">
+            <li class="nav-item">
               <a
-                class="nav-link"
+                class="nav-link active"
                 href="https://github.com/gopavasanth/toolwatch"
                 >Source code (MIT License)</a
               >
@@ -121,9 +120,9 @@
             <td>{{ tool.author }}</td>
             <td>
               {% if tool.health_status == True %}
-              <span class="badge badge-success">Available</span>
+              <span class="badge bg-success">Available</span>
               {% else %}
-              <span class="badge badge-danger">Unavailable</span>
+              <span class="badge bg-danger">Unavailable</span>
               {% endif %}
             </td>
             <td>{{ tool.last_checked }}</td>
