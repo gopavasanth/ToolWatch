@@ -21,3 +21,5 @@ class Tool(Base):
     bugtracker_url = Column(String)
     health_status = Column(Boolean, default=False)
     last_checked = Column(TIMESTAMP, default=datetime.datetime.now)
+    page_num = Column(Integer)
+    total_pages = Column(Integer)

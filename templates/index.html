@@ -21,7 +21,7 @@
         class="container"
         style="font-family: 'Courier New', Courier, monospace"
       >
-        <a class="navbar-brand" href="#">ToolWatch</a>
+        <a class="navbar-brand" href="/">ToolWatch</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -86,7 +86,32 @@
         </div>
       </div>
     </nav>
-
+    <div>
+      <form
+        action="{{ url_for('search') }}"
+        method="GET"
+        style="display: flex; padding: 15px; justify-content: center"
+      >
+        <div class="form-outline" style="width: 75vw">
+          <input
+            type="search"
+            id="search"
+            name="search"
+            class="form-control"
+            placeholder="&#128270; name: tool_name"
+            `{%
+            if
+            search_term
+            %}
+            value="{{ search_term }}"
+            {%
+            endif
+            %}`
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </form>
+    </div>
     <div class="container mt-4">
       <div class="alert alert-primary" role="alert">
         Note: URLs that do not have a <code>parsed_url.netloc</code> of
@@ -106,7 +131,7 @@
         <tbody>
           {% for tool in tools %}
           <tr>
-            {% if was_crawled.pop(0) == True %}
+            {% if was_crawled and was_crawled.pop(0) == True %}
             <td>
               <a
                 href="{{ tool.url }}"
@@ -131,7 +156,24 @@
           {% endfor %}
         </tbody>
       </table>
+      <div
+        style="
+          margin-bottom: 30px;
+          display: flex;
+          justify-content: space-between;
+        "
+      >
+        <div>{{curr_page}} / {{total_pages}}</div>
+        <div>
+          {% if curr_page > 1 %}
+          <a href="{{ url_for('index', page=curr_page-1) }}">Previous</a>
+          {% endif %} {% if curr_page < total_pages %}
+          <a href="{{ url_for('index', page=curr_page+1) }}">Next</a>
+          {% endif %}
+        </div>
+      </div>
     </div>
+
     <!-- Add Bootstrap JS scripts at the end of the body -->
     <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
     <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/popper.js/2.9.1/umd/popper.min.js"></script>
