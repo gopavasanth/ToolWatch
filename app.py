@@ -11,19 +11,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tools.db'
 def index():
     session = Session()
     curr_page = int(request.args.get("page",1))
-    tools = session.query(Tool).filter(Tool.page_num == curr_page).all()
-    if not tools:
-        tools = session.query(Tool).filter(Tool.page_num == 1).all()
-        curr_page = 1
     tools = session.query(Tool).all()
+    paginated_tools=tools[(curr_page-1)*50:curr_page*50]
+
     was_crawled = []
-    for tool in tools:
+    for tool in paginated_tools:
         url_parsed = urlparse(tool.url)
         if url_parsed.hostname != None and 'toolforge.org' in url_parsed.hostname :
             was_crawled.append(True)
         else:
             was_crawled.append(False)
-    return render_template('index.html', tools=tools, was_crawled=was_crawled, curr_page=curr_page,total_pages=tools[0].total_pages)
+    return render_template('index.html', tools=paginated_tools, was_crawled=was_crawled, curr_page=curr_page,total_pages=tools[0].total_pages)
 
 def fetch_and_store_data():
     API_URL = "https://toolsadmin.wikimedia.org/tools/toolinfo/v1.2/toolinfo.json"
@@ -59,26 +57,25 @@ def fetch_and_store_data():
 def search():
     session = Session()
     search_term = request.args.get("search","")
-    query = search_term.split(":")
-    if len(query) != 2:
-        return render_template('index.html',tools=[],search_term=search_term,curr_page=1,total_pages=1)
-    key,value = query
-    if key in ["name","title","author"]:
-        tools = session.query(Tool).filter(getattr(Tool,key.lower()).ilike(f"%{value}%")).all()
-    else:
-        tools = session.query(Tool).filter(Tool.keywords.contains(value)).all()
-    was_crawled = []
+    tools = session.query(Tool).all()
+    filtered_tools = []
     for tool in tools:
+        if search_term.lower() in tool.name.lower() or search_term.lower() in tool.title.lower() or search_term.lower() in tool.author.lower():
+            filtered_tools.append(tool)
+    was_crawled = []
+    for tool in filtered_tools:
         url_parsed = urlparse(tool.url)
         if url_parsed.hostname != None and 'toolforge.org' in url_parsed.hostname :
             was_crawled.append(True)
         else:
             was_crawled.append(False)
-    return render_template('index.html',tools=tools,search_term=search_term,curr_page=1,total_pages=1,was_crawled=was_crawled)
+    return render_template('index.html',tools=filtered_tools,search_term=search_term,curr_page=1,total_pages=1,was_crawled=was_crawled)
 
 if __name__ == '__main__':
-    print("Fetching and storing data...")
     Base.metadata.create_all(engine)
-    fetch_and_store_data()
+    session = Session()
+    if(session.query(Tool).count() == 0):
+        print("Fetching and storing data...")
+        fetch_and_store_data()
     print("Starting Flask server at 5000...")
     app.run(debug=True)
