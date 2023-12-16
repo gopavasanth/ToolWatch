@@ -9,7 +9,7 @@
     <!-- Add Bootstrap CSS link -->
     <link
       rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/css/bootstrap.min.css"
     />
   </head>
   <body>
@@ -17,7 +17,10 @@
       class="flex navbar navbar-expand-lg navbar-dark bg-dark"
       style="width: 100%"
     >
-      <div class="container">
+      <div
+        class="container"
+        style="font-family: 'Courier New', Courier, monospace"
+      >
         <a class="navbar-brand" href="#">ToolWatch</a>
         <button
           class="navbar-toggler"
@@ -31,10 +34,51 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item active">
-              <a class="nav-link" href="{{ url_for('index', page=1) }}"
-                >Refresh <span class="sr-only">(current)</span></a
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link disabled" href="{{ url_for('index') }}"
+                >Next crawl in
+                <span class="header-timer-space"> 00h 00m 00s</span></a
+              >
+              <script>
+                const today = new Date();
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setUTCHours(0, 0, 0, 0);
+                const tt = tomorrow.getTime();
+                // Update the count down every 1 second
+                let x = setInterval(function () {
+                  // Get today's date and time
+                  const now = new Date().getTime();
+
+                  // Find the distance between now and the count down date
+                  const distance = tt - now;
+
+                  // Time calculations for hours, minutes and seconds
+                  const hours = Math.floor(
+                    (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+                  );
+                  const minutes = Math.floor(
+                    (distance % (1000 * 60 * 60)) / (1000 * 60)
+                  );
+                  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                  // Display the result in the element with id="demo"
+                  document.querySelector(".header-timer-space").innerHTML =
+                    hours + "h " + minutes + "m " + seconds + "s ";
+
+                  if (distance < 0) {
+                    clearInterval(x);
+                    tt = tomorrow.setDate(tomorrow.getDate() + 1);
+                  }
+                }, 1000);
+              </script>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link active"
+                href="https://github.com/gopavasanth/toolwatch"
+                >Source code (MIT License)</a
               >
             </li>
             <!-- Add more navigation items as needed -->
@@ -44,6 +88,11 @@
     </nav>
 
     <div class="container mt-4">
+      <div class="alert alert-primary" role="alert">
+        Note: URLs that do not have a <code>parsed_url.netloc</code> of
+        <code>*.toolforge.org</code> are not shown.
+      </div>
+
       <table class="table table-striped" style="table-layout: fixed">
         <thead>
           <tr>
@@ -57,29 +106,35 @@
         <tbody>
           {% for tool in tools %}
           <tr>
+            {% if was_crawled.pop(0) == True %}
             <td>
-              <a href="https://{{ tool.name }}.toolforge.org" target="_blank">
-                {{ tool.name }}.toolforge.org
+              <a
+                href="{{ tool.url }}"
+                target="_blank"
+                style="word-wrap: break-word"
+              >
+                {{ tool.url }}
               </a>
             </td>
             <td>{{ tool.title }}</td>
             <td>{{ tool.author }}</td>
             <td>
               {% if tool.health_status == True %}
-              <span class="badge badge-success">Available</span>
+              <span class="badge bg-success">Available</span>
               {% else %}
-              <span class="badge badge-danger">Unavailable</span>
+              <span class="badge bg-danger">Unavailable</span>
               {% endif %}
             </td>
             <td>{{ tool.last_checked }}</td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
     <!-- Add Bootstrap JS scripts at the end of the body -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
+    <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/popper.js/2.9.1/umd/popper.min.js"></script>
+    <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/js/bootstrap.min.js"></script>
   </body>
 </html>

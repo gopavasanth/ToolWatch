@@ -15,7 +15,7 @@ More at: https://phabricator.wikimedia.org/T341379
 
 ## Usage
 
-1. Run the Flask app: `python main.py`
+1. Run the Flask app: `python app.py`
 2. Open your web browser and visit `http://localhost:5000` to view the tool health status.
 
 ## Directory Structure
@@ -23,12 +23,9 @@ More at: https://phabricator.wikimedia.org/T341379
 The directory structure of the project is as follows:
 
 - The `database` directory contains the SQLite database file.
-- The `tools` directory contains the application code for tools.
   - The `templates` directory contains HTML templates.
-  - The `models.py` file defines the Tool model and sets up the database.
-  - The `views.py` file contains the Flask routes and logic.
-  - The `__init__.py` file initializes the tools blueprint.
-- The `main.py` file is the main entry point of the Flask application.
+  - The `model.py` file defines the Tool model and sets up the database.
+- The `app.py` file is the main entry point of the Flask application.
 
 ## Customization
 
