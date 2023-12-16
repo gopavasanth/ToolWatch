@@ -60,7 +60,7 @@ def search():
     tools = session.query(Tool).all()
     filtered_tools = []
     for tool in tools:
-        if search_term.lower() in tool.name.lower() or search_term.lower() in tool.title.lower() or search_term.lower() in tool.author.lower():
+        if search_term.lower() in tool.url.lower() or search_term.lower() in tool.title.lower() or search_term.lower() in tool.author.lower():
             filtered_tools.append(tool)
     was_crawled = []
     for tool in filtered_tools:
