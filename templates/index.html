@@ -12,6 +12,37 @@
       href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/css/bootstrap.min.css"
     />
   </head>
+  <script>
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setUTCHours(0, 0, 0, 0);
+    const tt = tomorrow.getTime();
+    // Update the count down every 1 second
+    let x = setInterval(function () {
+      // Get today's date and time
+      const now = new Date().getTime();
+
+      // Find the distance between now and the count down date
+      const distance = tt - now;
+
+      // Time calculations for hours, minutes and seconds
+      const hours = Math.floor(
+        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+      // Display the result in the element with id="demo"
+      document.querySelector(".header-timer-space").innerHTML =
+        hours + "h " + minutes + "m " + seconds + "s ";
+
+      if (distance < 0) {
+        clearInterval(x);
+        tt = tomorrow.setDate(tomorrow.getDate() + 1);
+      }
+    }, 1000);
+  </script>
   <body>
     <nav
       class="flex navbar navbar-expand-lg navbar-dark bg-dark"
@@ -21,7 +52,9 @@
         class="container"
         style="font-family: 'Courier New', Courier, monospace"
       >
-        <a class="navbar-brand" href="/">ToolWatch</a>
+        <a class="navbar-brand" href="/">
+          <div class="tool-title">ToolWatch</div></a
+        >
         <button
           class="navbar-toggler"
           type="button"
@@ -36,57 +69,26 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
             <li class="nav-item">
-              <a class="nav-link disabled" href="{{ url_for('index') }}"
-                >Next crawl in
-                <span class="header-timer-space"> 00h 00m 00s</span></a
-              >
-              <script>
-                const today = new Date();
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                tomorrow.setUTCHours(0, 0, 0, 0);
-                const tt = tomorrow.getTime();
-                // Update the count down every 1 second
-                let x = setInterval(function () {
-                  // Get today's date and time
-                  const now = new Date().getTime();
-
-                  // Find the distance between now and the count down date
-                  const distance = tt - now;
-
-                  // Time calculations for hours, minutes and seconds
-                  const hours = Math.floor(
-                    (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-                  );
-                  const minutes = Math.floor(
-                    (distance % (1000 * 60 * 60)) / (1000 * 60)
-                  );
-                  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                  // Display the result in the element with id="demo"
-                  document.querySelector(".header-timer-space").innerHTML =
-                    hours + "h " + minutes + "m " + seconds + "s ";
-
-                  if (distance < 0) {
-                    clearInterval(x);
-                    tt = tomorrow.setDate(tomorrow.getDate() + 1);
-                  }
-                }, 1000);
-              </script>
+              <div class="nav-link active">
+                <!-- check if last_checked is present in any one of the tool -->
+                Last crawled on {% if tools and tools[0] and
+                tools[0].last_checked %}
+                <span>{{tools[0].last_checked}}</span>
+                {% else %}
+                <span>-</span>
+                {% endif %}
+              </div>
             </li>
-            <li class="nav-item">
-              <a
-                class="nav-link active"
-                href="https://github.com/gopavasanth/toolwatch"
-                >Source code (MIT License)</a
-              >
-            </li>
+
             <!-- Add more navigation items as needed -->
           </ul>
         </div>
       </div>
     </nav>
     <div>
+      <h5 class="tool-description">
+        A tool to monitor the health of Wikimedia tools (hosted on Toolforge)
+      </h5>
       <form
         action="{{ url_for('search') }}"
         method="GET"
@@ -97,8 +99,8 @@
             type="search"
             id="search"
             name="search"
-            class="form-control"
-            placeholder="Search by author, url or title"
+            class="wiki-search-input"
+            placeholder="Search by Author, URL or Title"
             `{%
             if
             search_term
@@ -109,39 +111,44 @@
             %}`
           />
         </div>
-        <button type="submit" class="btn btn-primary">Search</button>
+        <button type="submit" class="wiki-submit-btn"><b>Search</b></button>
       </form>
     </div>
     <div class="container mt-4">
-      <div class="alert alert-primary" role="alert">
-        Note: URLs that do not have a <code>parsed_url.netloc</code> of
-        <code>*.toolforge.org</code> are not shown.
-      </div>
-
       <table class="table table-striped" style="table-layout: fixed">
         <thead>
           <tr>
-            <th>Tool URL</th>
-            <th>Title</th>
+            <th>Tool</th>
+            <th>Description</th>
             <th>Author</th>
-            <th>Health</th>
-            <th>Timestamp</th>
+            <th
+              data-toggle="tooltip"
+              data-placement="top"
+              title="Whether the tool is available or not"
+            >
+              Health
+            </th>
           </tr>
         </thead>
         <tbody>
           {% for tool in tools %}
           <tr>
-            {% if was_crawled and was_crawled.pop(0) == True %}
             <td>
               <a
                 href="{{ tool.url }}"
                 target="_blank"
                 style="word-wrap: break-word"
               >
-                {{ tool.url }}
+                {{ tool.title }}
               </a>
             </td>
-            <td>{{ tool.title }}</td>
+            <td
+              data-toggle="tooltip"
+              data-placement="top"
+              title="{{tool.description}}"
+            >
+              {{tool.description[:50]}}...
+            </td>
             <td>{{ tool.author }}</td>
             <td>
               {% if tool.health_status == True %}
@@ -150,12 +157,15 @@
               <span class="badge bg-danger">Unavailable</span>
               {% endif %}
             </td>
-            <td>{{ tool.last_checked }}</td>
-            {% endif %}
+            <!-- <td>{{ tool.last_checked }}</td> -->
           </tr>
           {% endfor %}
         </tbody>
       </table>
+      <div class="alert alert-primary" role="alert">
+        Note: URLs that do not have a <code>parsed_url.netloc</code> of
+        <code>*.toolforge.org</code> are not shown.
+      </div>
       <div
         style="
           margin-bottom: 30px;
@@ -172,6 +182,16 @@
           {% endif %}
         </div>
       </div>
+      <footer class="tool-footer">
+        <a
+          style="display: flex; justify-content: center"
+          href="https://github.com/gopavasanth/toolwatch"
+          >Source code (MIT License)</a
+        >
+        <div class="tool-next-timer">
+          Next crawl in <span class="header-timer-space">00h 00m 00s</span>
+        </div>
+      </footer>
     </div>
 
     <!-- Add Bootstrap JS scripts at the end of the body -->
