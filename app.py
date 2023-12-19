@@ -6,13 +6,14 @@ from urllib.parse import urlparse
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tools.db'
+page_limit = 25
 
 @app.route('/')
 def index():
     session = Session()
     curr_page = int(request.args.get("page",1))
     tools = session.query(Tool).all()
-    paginated_tools=tools[(curr_page-1)*50:curr_page*50]
+    paginated_tools=tools[(curr_page-1)*page_limit:curr_page*page_limit]
 
     was_crawled = []
     for tool in paginated_tools:
@@ -28,7 +29,6 @@ def fetch_and_store_data():
     response = requests.get(API_URL)
     data = response.json()
     session = Session()
-    page_limit = 50
     total_pages = len(data) // page_limit
     for page in range(1, total_pages + 1):
         start = (page - 1) * page_limit
