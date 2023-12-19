@@ -34,7 +34,7 @@
       const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
       // Display the result in the element with id="demo"
-      document.querySelector(".header-timer-space").innerHTML =
+      document.querySelector(".header-timer-space").innerText =
         hours + "h " + minutes + "m " + seconds + "s ";
 
       if (distance < 0) {
@@ -85,10 +85,9 @@
         </div>
       </div>
     </nav>
-    <div>
-      <h5 class="tool-description">
-        A tool to monitor the health of Wikimedia tools (hosted on Toolforge)
-      </h5>
+    <div
+      style="position: sticky; top: 5px; background-color: white; z-index: 1"
+    >
       <form
         action="{{ url_for('search') }}"
         method="GET"
