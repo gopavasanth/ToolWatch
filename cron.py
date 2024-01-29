@@ -6,6 +6,7 @@ from model import Tool
 from urllib.parse import urlparse
 import time
 import datetime
+from config import config
 
 def sync_get(url):
     try:
@@ -19,7 +20,7 @@ def sync_get(url):
         return False
 
 def ping_every_30_minutes():
-    engine = create_engine('sqlite:///tools.db')
+    engine = create_engine(config['SQLALCHEMY_DATABASE_URI'])
     SessionInit = sessionmaker(bind=engine)
     session = SessionInit()
     tools = session.query(Tool).all()
@@ -50,4 +51,5 @@ def ping_every_30_minutes():
     session.commit()
 
 if __name__ == '__main__':
+    print("Running Production Server...")
     ping_every_30_minutes()
