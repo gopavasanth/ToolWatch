@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-curr_env = os.environ['ENV'] if 'ENV' in os.environ else 'development'
+curr_env = os.environ['MODE'] if 'MODE' in os.environ else 'development'
 DB_URL = "tools.db.svc.wikimedia.cloud" if curr_env == 'production' else "localhost"
 DB_USERNAME = os.getenv('DB_USERNAME') if curr_env == 'production' else "root"
 DB_PASSWORD = os.getenv('DB_PASSWORD') if curr_env == 'production' else "toolwatch"
