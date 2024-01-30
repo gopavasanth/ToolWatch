@@ -13,10 +13,25 @@ More at: https://phabricator.wikimedia.org/T341379
    - For Unix/Linux: `source venv/bin/activate`
 5. Install the dependencies: `pip install -r requirements.txt`
 
+## Database
+
+1. Before starting the app, you need to start the MariaDB instance on your local device.
+2. You can install the MariaDB from [here](https://mariadb.com/downloads/), or other sources.
+3. After installing the MariaDB, you need to create a database with the following credentials:
+
+   - database name: `toolwatch`
+   - username: `root`
+   - password: `toolwatch`
+
+4. These credentials are defined in `config.py` file.
+
+> _For production, we use Wikimedia Cloud database, and for production purposes we may need to create a .env file, with variables defined._
+
 ## Usage
 
-1. Run the Flask app: `python app.py`
-2. Open your web browser and visit `http://localhost:5000` to view the tool health status.
+1. Run the database service (MariaDB instance, if running locally).
+2. Run the Flask app: `python app.py`
+3. Open your web browser and visit `http://localhost:5000` to view the tool health status.
 
 ## Directory Structure
 
