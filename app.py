@@ -7,7 +7,7 @@ from config import config
 from utils import fetch_and_store_data
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = config['SQLALCHEMY_DATABASE_URI']
+app.config['MARIADB_URI'] = config['MARIADB_URI']
 page_limit = config['page_limit']
 
 @app.route('/')

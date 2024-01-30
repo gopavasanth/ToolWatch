@@ -3,7 +3,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base  # Import declarative_
 import datetime
 from config import config
 
-engine = create_engine(config['SQLALCHEMY_DATABASE_URI'])
+engine = create_engine(config['MARIADB_URI'])
 Session = sessionmaker(bind=engine)
 Base = declarative_base()  # Use declarative_base from sqlalchemy.orm
 

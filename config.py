@@ -10,7 +10,7 @@ DB_PASSWORD = os.getenv('DB_PASSWORD') if curr_env == 'production' else "toolwat
 DB_NAME = os.getenv('DB_NAME') if curr_env == 'production' else "toolwatch"
 
 config = {
-    'SQLALCHEMY_DATABASE_URI': f'mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_URL}:3306/{DB_NAME}',
+    'MARIADB_URI': f'mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_URL}:3306/{DB_NAME}',
     'page_limit': 25,
     'API_URL': "https://toolsadmin.wikimedia.org/tools/toolinfo/v1.2/toolinfo.json"
 }

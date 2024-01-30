@@ -51,7 +51,7 @@ def sync_get(url):
         return False
 
 def ping_every_30_minutes():
-    engine = create_engine(config['SQLALCHEMY_DATABASE_URI'])
+    engine = create_engine(config['MARIADB_URI'])
     SessionInit = sessionmaker(bind=engine)
     session = SessionInit()
     tools = session.query(Tool).all()
