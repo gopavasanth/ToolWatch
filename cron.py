@@ -1,55 +1,20 @@
 import requests
 import datetime
+import time
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from model import Tool
+from model import Tool,Base,engine,Session
 from urllib.parse import urlparse
-import time
-import datetime
 from config import config
+from utils import ping_every_30_minutes,fetch_and_store_data
 
-def sync_get(url):
-    try:
-        print( f'[*] Fetching url {url}' )
-        response = requests.head(url, timeout=5)
-        if response.status_code >= 200 and response.status_code < 399:
-            return True
-        else:
-            return False
-    except requests.RequestException:
-        return False
-
-def ping_every_30_minutes():
-    engine = create_engine(config['SQLALCHEMY_DATABASE_URI'])
-    SessionInit = sessionmaker(bind=engine)
-    session = SessionInit()
-    tools = session.query(Tool).all()
-    urls = []
-    print("Checking health status of tools")
-    for t in tools:
-        urls.append(t.url)
-    print('Gathered urls')
-    results = []
-    last_checkeds = []
-    for url in urls:
-        time.sleep(0.01)
-        url_parsed = urlparse(url)
-        last_checkeds.append(datetime.datetime.now())
-        print( f'[*] Checking health of {url} with hostname {url_parsed.hostname}' )
-        if  url_parsed.hostname != None and 'toolforge.org' in url_parsed.hostname:
-            result = sync_get(url)
-        else:
-            result = False # Don't check the health of non-toolforge.org urls
-        print(f'[*] {url} is {result}')
-        results.append(result)
-    print('Gathered results')
-    for tool in tools:
-        result = results.pop(0)
-        tool.health_status = result
-        tool.last_checked = last_checkeds.pop(0)
-        session.add(tool)
-    session.commit()
 
 if __name__ == '__main__':
     print("Running Production Server...")
+    Base.metadata.create_all(engine)
+    session = Session()
+    if(session.query(Tool).count() == 0):
+        # if db is empty, fetch data
+        print("Fetching and storing data...")
+        fetch_and_store_data()
     ping_every_30_minutes()

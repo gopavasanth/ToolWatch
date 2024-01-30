@@ -4,6 +4,7 @@ import requests
 from model import Session, Tool, Base, engine
 from urllib.parse import urlparse
 from config import config
+from utils import fetch_and_store_data
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = config['SQLALCHEMY_DATABASE_URI']
@@ -24,35 +25,6 @@ def index():
         else:
             was_crawled.append(False)
     return render_template('index.html', tools=paginated_tools, was_crawled=was_crawled, curr_page=curr_page,total_pages=tools[0].total_pages)
-
-def fetch_and_store_data():
-    API_URL = config['API_URL']
-    response = requests.get(API_URL)
-    data = response.json()
-    session = Session()
-    total_pages = len(data) // page_limit
-    for page in range(1, total_pages + 1):
-        start = (page - 1) * page_limit
-        end = page * page_limit
-        page_data = data[start:end]
-
-        for tool_data in page_data:
-            tool = Tool(
-                name=tool_data['name'],
-                title=tool_data['title'],
-                description=tool_data['description'],
-                url=tool_data['url'],
-                keywords=tool_data.get('keywords', ''),  # Use .get() to handle missing keys
-                author=tool_data['author'][0]['name'],
-                repository=tool_data.get('repository', ''),  # Use .get() to handle missing keys
-                license=tool_data.get('license', ''),  # Use .get() to handle missing keys
-                technology_used=', '.join(tool_data.get('technology_used', [])),  # Use .get() to handle missing keys
-                bugtracker_url=tool_data.get('bugtracker_url', ''),  # Use .get() to handle missing keys
-                page_num = page,
-                total_pages = total_pages
-            )
-            session.add(tool)
-    session.commit()
 
 @app.route('/search')
 def search():
@@ -77,6 +49,7 @@ if __name__ == '__main__':
     Base.metadata.create_all(engine)
     session = Session()
     if(session.query(Tool).count() == 0):
+        # if db is empty, fetch data
         print("Fetching and storing data...")
         fetch_and_store_data()
     print("Starting Flask server at 5000...")
