@@ -7,7 +7,7 @@ More at: https://phabricator.wikimedia.org/T341379
 
 1. Clone the repository: `git clone https://github.com/gopavasanth/ToolWatch`
 2. Navigate to the project directory: `cd ToolWatch`
-3. Create a virtual environment: `python -m venv venv`
+3. Create a virtual environment: `python3 -m venv venv`
 4. Activate the virtual environment:
    - For Windows: `venv\Scripts\activate`
    - For Unix/Linux: `source venv/bin/activate`
