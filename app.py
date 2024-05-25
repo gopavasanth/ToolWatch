@@ -24,10 +24,10 @@ def index():
             was_crawled.append(True)
         else:
             was_crawled.append(False)
-    return render_template('index.html', tools=paginated_tools, was_crawled=was_crawled, curr_page=curr_page,total_pages=tools[0].total_pages)
+    return render_template('index.html', tools=paginated_tools, was_crawled=was_crawled, curr_page=curr_page,total_pages=tools[0].total_pages, route='index')
 
-@app.route("/sort")
-def sort():
+@app.route("/sortT")
+def sortT():
     session = Session()
     curr_page = int(request.args.get("page",1))
     tools = session.query(Tool).order_by(Tool.title).all()
@@ -40,7 +40,24 @@ def sort():
             was_crawled.append(True)
         else:
             was_crawled.append(False)
-    return render_template('index.html', tools=paginated_tools, was_crawled=was_crawled, curr_page=curr_page,total_pages=tools[0].total_pages)
+    return render_template('index.html', tools=paginated_tools, was_crawled=was_crawled, curr_page=curr_page,total_pages=tools[0].total_pages, route='sortT')
+
+@app.route("/sortA")
+def sortA():
+    session = Session()
+    curr_page = int(request.args.get("page",1))
+    tools = session.query(Tool).order_by(Tool.author).all()
+    paginated_tools=tools[(curr_page-1)*page_limit:curr_page*page_limit]
+
+    was_crawled = []
+    for tool in paginated_tools:
+        url_parsed = urlparse(tool.url)
+        if url_parsed.hostname != None and 'toolforge.org' in url_parsed.hostname :
+            was_crawled.append(True)
+        else:
+            was_crawled.append(False)
+    return render_template('index.html', tools=paginated_tools, was_crawled=was_crawled, curr_page=curr_page,total_pages=tools[0].total_pages, route='sortA')
+
 
 @app.route('/search')
 def search():

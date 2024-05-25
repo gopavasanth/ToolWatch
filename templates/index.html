@@ -1,201 +1,162 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>ToolWatch</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-    <!-- Add Bootstrap CSS link -->
-    <link
-      rel="stylesheet"
-      href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/css/bootstrap.min.css"
-    />
-  </head>
-  <script>
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setUTCHours(0, 0, 0, 0);
-    const tt = tomorrow.getTime();
-    // Update the count down every 1 second
-    let x = setInterval(function () {
-      // Get today's date and time
-      const now = new Date().getTime();
+<head>
+  <title>ToolWatch</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <!-- Add Bootstrap CSS link -->
+  <link rel="stylesheet"
+    href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/css/bootstrap.min.css" />
+</head>
+<script>
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setUTCHours(0, 0, 0, 0);
+  const tt = tomorrow.getTime();
+  // Update the count down every 1 second
+  let x = setInterval(function () {
+    // Get today's date and time
+    const now = new Date().getTime();
 
-      // Find the distance between now and the count down date
-      const distance = tt - now;
+    // Find the distance between now and the count down date
+    const distance = tt - now;
 
-      // Time calculations for hours, minutes and seconds
-      const hours = Math.floor(
-        (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-      );
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    // Time calculations for hours, minutes and seconds
+    const hours = Math.floor(
+      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-      // Display the result in the element with id="demo"
-      document.querySelector(".header-timer-space").innerText =
-        hours + "h " + minutes + "m " + seconds + "s ";
+    // Display the result in the element with id="demo"
+    document.querySelector(".header-timer-space").innerText =
+      hours + "h " + minutes + "m " + seconds + "s ";
 
-      if (distance < 0) {
-        clearInterval(x);
-        tt = tomorrow.setDate(tomorrow.getDate() + 1);
-      }
-    }, 1000);
-  </script>
-  <body>
-    <nav
-      class="flex navbar navbar-expand-lg navbar-dark bg-dark"
-      style="width: 100%"
-    >
-      <div
-        class="container"
-        style="font-family: 'Courier New', Courier, monospace"
-      >
-        <a class="navbar-brand" href="/">
-          <div class="tool-title">ToolWatch</div></a
-        >
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <div class="nav-link active">
-                <!-- check if last_checked is present in any one of the tool -->
-                Last crawled on {% if tools and tools[0] and
-                tools[0].last_checked %}
-                <span>{{tools[0].last_checked}}</span>
-                {% else %}
-                <span>-</span>
-                {% endif %}
-              </div>
-            </li>
+    if (distance < 0) {
+      clearInterval(x);
+      tt = tomorrow.setDate(tomorrow.getDate() + 1);
+    }
+  }, 1000);
+</script>
 
-            <!-- Add more navigation items as needed -->
-          </ul>
-        </div>
-      </div>
-    </nav>
-    <div
-      style="position: sticky; top: 5px; background-color: white; z-index: 1"
-    >
-      <form
-        action="{{ url_for('search') }}"
-        method="GET"
-        style="display: flex; padding: 15px; justify-content: center"
-      >
-        <div class="form-outline" style="width: 75vw">
-          <input
-            type="search"
-            id="search"
-            name="search"
-            class="wiki-search-input"
-            placeholder="Search by Author, URL or Title"
-            `{%
-            if
-            search_term
-            %}
-            value="{{ search_term }}"
-            {%
-            endif
-            %}`
-          />
-        </div>
-        <button type="submit" class="wiki-submit-btn"><b>Search</b></button>
-      </form>
-    </div>
-    <div class="container mt-4">
-      <table class="table table-striped" style="table-layout: fixed">
-        <thead>
-          <tr>
-            <th>Tool</th>
-            <th>Description</th>
-            <th>Author</th>
-            <th
-              data-toggle="tooltip"
-              data-placement="top"
-              title="Whether the tool is available or not"
-            >
-              Health
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for tool in tools %}
-          <tr>
-            <td>
-              <a
-                href="{{ tool.url }}"
-                target="_blank"
-                style="word-wrap: break-word"
-              >
-                {{ tool.title }}
-              </a>
-            </td>
-            <td
-              data-toggle="tooltip"
-              data-placement="top"
-              title="{{tool.description}}"
-            >
-              {{tool.description[:50]}}...
-            </td>
-            <td>{{ tool.author }}</td>
-            <td>
-              {% if tool.health_status == True %}
-              <span class="badge bg-success">Available</span>
+<body>
+  <nav class="flex navbar navbar-expand-lg navbar-dark bg-dark" style="width: 100%">
+    <div class="container" style="font-family: 'Courier New', Courier, monospace;">
+      <a class="navbar-brand" href="/">
+        <div class="tool-title">ToolWatch</div>
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <div class="nav-link active">
+              <!-- check if last_checked is present in any one of the tool -->
+              Last crawled on {% if tools and tools[0] and
+              tools[0].last_checked %}
+              <span>{{tools[0].last_checked}}</span>
               {% else %}
-              <span class="badge bg-danger">Unavailable</span>
+              <span>-</span>
               {% endif %}
-            </td>
-            <!-- <td>{{ tool.last_checked }}</td> -->
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <div class="alert alert-primary" role="alert">
-        Note: URLs that do not have a <code>parsed_url.netloc</code> of
-        <code>*.toolforge.org</code> are not shown.
+            </div>
+          </li>
+
+          <!-- Add more navigation items as needed -->
+        </ul>
       </div>
-      <div
-        style="
+    </div>
+  </nav>
+  <div style="position: sticky; top: 5px; background-color: white; z-index: 1">
+    <form action="{{ url_for('search') }}" method="GET" style="display: flex; padding: 15px; justify-content: center">
+      <div class="form-outline" style="width: 75vw">
+        <input type="search" id="search" name="search" class="wiki-search-input"
+          placeholder="Search by Author, URL or Title" `{% if search_term %} value="{{ search_term }}" {% endif %}` />
+      </div>
+      <button type="submit" class="wiki-submit-btn"><b>Search</b></button>
+    </form>
+  </div>
+  <!-- Sorting mechanism -->
+  <div style="display: flex; justify-content: center;">
+    <div style="width: 75vw; display: flex; justify-content: center;">
+    <div style="width: 60px; display: flex;">
+      Sort By:
+    </div>
+    <div style="display: flex;">
+      <a class="dropdown-item" href="{{ url_for('index') }}" style="margin-right: 10px; color: blue;"> None </a>
+      <a class="dropdown-item" href="{{ url_for('sortT') }}" style="margin-right: 10px; color: blue;"> Title </a>
+      <a class="dropdown-item" href="{{ url_for('sortA') }}" style="color: blue;"> Author </a>
+    </div>
+    </div>
+  </div>
+  
+  <div class="container mt-4">
+    <table class="table table-striped" style="table-layout: fixed">
+      <thead>
+        <tr>
+          <th>Tool</th>
+          <th>Description</th>
+          <th>Author</th>
+          <th data-toggle="tooltip" data-placement="top" title="Whether the tool is available or not">
+            Health
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tool in tools %}
+        <tr>
+          <td>
+            <a href="{{ tool.url }}" target="_blank" style="word-wrap: break-word">
+              {{ tool.title }}
+            </a>
+          </td>
+          <td data-toggle="tooltip" data-placement="top" title="{{tool.description}}">
+            {{tool.description[:50]}}...
+          </td>
+          <td>{{ tool.author }}</td>
+          <td>
+            {% if tool.health_status == True %}
+            <span class="badge bg-success">Available</span>
+            {% else %}
+            <span class="badge bg-danger">Unavailable</span>
+            {% endif %}
+          </td>
+          <!-- <td>{{ tool.last_checked }}</td> -->
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="alert alert-primary" role="alert">
+      Note: URLs that do not have a <code>parsed_url.netloc</code> of
+      <code>*.toolforge.org</code> are not shown.
+    </div>
+    <div style="
           margin-bottom: 30px;
           display: flex;
           justify-content: space-between;
-        "
-      >
-        <div>{{curr_page}} / {{total_pages}}</div>
-        <div>
-          {% if curr_page > 1 %}
-          <a href="{{ url_for('index', page=curr_page-1) }}">Previous</a>
-          {% endif %} {% if curr_page < total_pages %}
-          <a href="{{ url_for('index', page=curr_page+1) }}">Next</a>
+        ">
+      <div>{{curr_page}} / {{total_pages}}</div>
+      <div>
+        {% if curr_page > 1 %}
+        <a href="{{ url_for(route, page=curr_page-1) }}">Previous</a>
+        {% endif %} {% if curr_page < total_pages %} <a href="{{ url_for(route, page=curr_page+1) }}">Next</a>
           {% endif %}
-        </div>
       </div>
-      <footer class="tool-footer">
-        <a
-          style="display: flex; justify-content: center"
-          href="https://github.com/gopavasanth/toolwatch"
-          >Source code (MIT License)</a
-        >
-        <div class="tool-next-timer">
-          Next crawl in <span class="header-timer-space">00h 00m 00s</span>
-        </div>
-      </footer>
     </div>
+    <footer class="tool-footer">
+      <a style="display: flex; justify-content: center" href="https://github.com/gopavasanth/toolwatch">Source code (MIT
+        License)</a>
+      <div class="tool-next-timer">
+        Next crawl in <span class="header-timer-space">00h 00m 00s</span>
+      </div>
+    </footer>
+  </div>
 
-    <!-- Add Bootstrap JS scripts at the end of the body -->
-    <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
-    <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/popper.js/2.9.1/umd/popper.min.js"></script>
-    <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/js/bootstrap.min.js"></script>
-  </body>
+  <!-- Add Bootstrap JS scripts at the end of the body -->
+  <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/jquery/3.5.1/jquery.slim.min.js"></script>
+  <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/popper.js/2.9.1/umd/popper.min.js"></script>
+  <script src="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/js/bootstrap.min.js"></script>
+</body>
+
 </html>
