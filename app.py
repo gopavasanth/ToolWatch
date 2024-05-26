@@ -44,6 +44,16 @@ def search():
             was_crawled.append(False)
     return render_template('index.html',tools=filtered_tools,search_term=search_term,curr_page=1,total_pages=1,was_crawled=was_crawled)
 
+@app.route('/tools/<int:id>')
+def get_charts(id):
+    try:
+        tool = session.query(Tool).filter_by(id=id).first()
+        record = session.query(record).filter_by(id=id).first()
+        return render_template("graph.html", tool = tool, record = record, isValid = True)
+    except EXCEPTION as e: 
+        return render_template("graph.html", isValid = False)
+
+
 if __name__ == '__main__':
     print("Running Development Server...")
     Base.metadata.create_all(engine)
