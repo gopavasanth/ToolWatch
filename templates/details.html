@@ -59,12 +59,39 @@
     </nav>
 
     <div class="container">
-      <div class="row text-center">
-        <div>
+      <div>
+        <div class="row mt-4">
+          <p><b>Tool Name: </b>{{tool.name}}</p>
+        </div>
+
+        <div class="row">
+          <p><b>Url: </b><a href="{{tool.url}}">{{tool.url}}</a></p>
+        </div>
+        <div class="row">
+          <p><b>Tool Description: </b>{{tool.description}}</p>
+        </div>
+
+        <div class="row">
+          <p><b>Author: </b>{{tool.author}}</p>
+        </div>
+        <div class="row">
+          <p><b>License: </b>{{tool.license}}</p>
+        </div>
+        <div class="row">
+          <p>
+            <b>Repository: </b
+            ><a href="{{tool.repository}}">{{tool.repository}}</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="row my-3">
+        <h3>Availability Graph</h3>
+      </div>
+      <div>
+        <div style="height: 20rem">
           <canvas id="availability_graph"></canvas>
         </div>
-        <h1>Graph</h1>
-        <h1>test</h1>
       </div>
     </div>
     <script
