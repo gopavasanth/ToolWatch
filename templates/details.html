@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>ToolWatch</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <!-- Add Bootstrap CSS link -->
+    <link
+      rel="stylesheet"
+      href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/css/bootstrap.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const health_statuses = {{health_statuses | safe}}
+      const days = {{days | safe}}
+    </script>
+  </head>
+  <body>
+    <nav
+      class="flex navbar navbar-expand-lg navbar-dark bg-dark"
+      style="width: 100%"
+    >
+      <div
+        class="container"
+        style="font-family: &quot;Courier New&quot;, Courier, monospace"
+      >
+        <a class="navbar-brand" href="/">
+          <div class="tool-title">ToolWatch</div></a
+        >
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-toggle="collapse"
+          data-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <div class="nav-link active">
+                <!-- check if last_checked is present in any one of the tool -->
+                Last crawled on {% if tool and tool.last_checked %}
+                <span>{{tool.last_checked}}</span>
+                {% else %}
+                <span>-</span>
+                {% endif %}
+              </div>
+            </li>
+            <!-- Add more navigation items as needed -->
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="row text-center">
+        <div>
+          <canvas id="availability_graph"></canvas>
+        </div>
+        <h1>Graph</h1>
+        <h1>test</h1>
+      </div>
+    </div>
+    <script
+      type="text/javascript"
+      src="{{ url_for('static', filename='graph.js') }}"
+    ></script>
+  </body>
+</html>
