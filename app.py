@@ -84,7 +84,7 @@ def show_details(id):
             "details.html",
             tool=tool,
             health_statuses=json.dumps(health_statuses),
-            days=days,
+            days=json.dumps(days),
         )
 
     except NoResultFound as e:
