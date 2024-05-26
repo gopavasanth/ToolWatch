@@ -1,8 +1,9 @@
 import json
 from urllib.parse import urlparse
 
-from flask import Flask, render_template, request
+from flask import Flask, abort, render_template, request
 from sqlalchemy import desc
+from sqlalchemy.orm.exc import NoResultFound
 
 from config import config
 from model import Base, Record, Session, Tool, engine
@@ -66,24 +67,28 @@ def search():
     )
 
 
-@app.route("/tools/<id>")
+@app.route("/tools/<int:id>")
 def show_details(id):
     session = Session()
-    tool = session.get(Tool, id)
-    records = (
-        session.query(Record)
-        .filter(Record.tool_id == id)
-        .order_by(desc(Record.timestamp))
-        .all()
-    )
-    health_statuses = [record.health_status for record in records]
-    days = [record.timestamp.strftime("%d %b") for record in records]
-    return render_template(
-        "details.html",
-        tool=tool,
-        health_statuses=json.dumps(health_statuses),
-        days=days,
-    )
+    try:
+        tool = session.get(Tool, id)
+        records = (
+            session.query(Record)
+            .filter(Record.tool_id == id)
+            .order_by(desc(Record.timestamp))
+            .all()
+        )
+        health_statuses = [record.health_status for record in records]
+        days = [record.timestamp.strftime("%d %b") for record in records]
+        return render_template(
+            "details.html",
+            tool=tool,
+            health_statuses=json.dumps(health_statuses),
+            days=days,
+        )
+
+    except NoResultFound as e:
+        abort(404)
 
 
 if __name__ == "__main__":
