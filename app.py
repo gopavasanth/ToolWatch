@@ -1,8 +1,9 @@
 import json
+from datetime import datetime
 from urllib.parse import urlparse
 
 from flask import Flask, abort, render_template, request
-from sqlalchemy import desc
+from sqlalchemy import extract
 from sqlalchemy.orm.exc import NoResultFound
 
 from config import config
@@ -67,28 +68,31 @@ def search():
     )
 
 
-@app.route("/tools/<int:id>")
+@app.route("/tools/<int:id>", methods=["GET", "POST"])
 def show_details(id):
-    session = Session()
-    try:
-        tool = session.get(Tool, id)
-        records = (
-            session.query(Record)
-            .filter(Record.tool_id == id)
-            .order_by(desc(Record.timestamp))
-            .all()
-        )
-        health_statuses = [record.health_status for record in records]
-        days = [record.timestamp.strftime("%d %b") for record in records]
-        return render_template(
-            "details.html",
-            tool=tool,
-            health_statuses=json.dumps(health_statuses),
-            days=json.dumps(days),
-        )
+    month = request.form.get("month") if request.form else datetime.now().month
+    year = request.form.get("year") if request.form else datetime.now().year
 
-    except NoResultFound as e:
-        abort(404)
+    session = Session()
+    tool = session.get(Tool, id)
+    records = (
+        session.query(Record)
+        .filter(Record.tool_id == id)
+        .order_by(Record.timestamp)
+        .filter(extract("year", Record.timestamp) == year)
+        .filter(extract("month", Record.timestamp) == month)
+    )
+
+    health_statuses = [record.health_status for record in records]
+    days = [record.timestamp.strftime("%d %b") for record in records]
+    return render_template(
+        "details.html",
+        tool=tool,
+        health_statuses=json.dumps(health_statuses),
+        days=json.dumps(days),
+        selected_year=year,
+        selected_month=month,
+    )
 
 
 if __name__ == "__main__":
