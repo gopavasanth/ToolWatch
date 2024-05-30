@@ -2,7 +2,7 @@ import os
 import requests
 import datetime
 import time
-from model import Session, Tool, Base, engine
+from model import Session, Tool, Base, engine, Record
 from config import config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -73,10 +73,13 @@ def ping_every_30_minutes():
             result = False # Don't check the health of non-toolforge.org urls
         print(f'[*] {url} is {result}')
         results.append(result)
+
     print('Gathered results')
     for tool in tools:
         result = results.pop(0)
         tool.health_status = result
         tool.last_checked = last_checkeds.pop(0)
+        record = Record(tool=tool, health_status=result)
         session.add(tool)
+        session.add(record)
     session.commit()

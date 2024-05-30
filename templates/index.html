@@ -127,6 +127,9 @@
             >
               Health
             </th>
+            <th>
+              Details
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -141,6 +144,7 @@
                 {{ tool.title }}
               </a>
             </td>
+            
             <td
               data-toggle="tooltip"
               data-placement="top"
@@ -155,6 +159,12 @@
               {% else %}
               <span class="badge bg-danger">Unavailable</span>
               {% endif %}
+            </td>
+            <td>
+              <button  >
+                <a href = "tools/{{tool.id}}">Go to details</a>
+              </button>
+              
             </td>
             <!-- <td>{{ tool.last_checked }}</td> -->
           </tr>

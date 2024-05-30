@@ -1,5 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, Boolean, TIMESTAMP, Text
-from sqlalchemy.orm import sessionmaker, declarative_base  # Import declarative_base from sqlalchemy.orm
+from sqlalchemy.orm import sessionmaker, declarative_base,relationship, mapped_column
+from sqlalchemy import ForeignKey
+
 import datetime
 from config import config
 
@@ -24,3 +26,12 @@ class Tool(Base):
     last_checked = Column(TIMESTAMP, default=datetime.datetime.now)
     page_num = Column(Integer)
     total_pages = Column(Integer)
+    records = relationship("Record", back_populates="tool")
+
+class Record(Base):
+    __tablename__ = "records"
+    id = Column(Integer, primary_key=True)
+    tool_id = mapped_column(ForeignKey("tools.id")) 
+    tool = relationship("Tool", back_populates="records")
+    timestamp = Column(TIMESTAMP, default=datetime.datetime.now)
+    health_status = Column(Boolean, default=False)
