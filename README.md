@@ -3,6 +3,13 @@
 ToolWatch checks the health status of various Wikimedia tools and displays them in a user-friendly UI.
 More at: https://phabricator.wikimedia.org/T341379
 
+## Toolforge
+
+To update the tool, the following commands need to be run
+```sh
+cd ToolWatch && git pull && ./scripts/toolforge-update.sh
+```
+
 ## Installation
 
 1. Clone the repository: `git clone https://github.com/gopavasanth/ToolWatch`
