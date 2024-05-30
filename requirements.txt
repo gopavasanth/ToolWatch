@@ -9,7 +9,6 @@ DateTime==5.2
 Flask==2.3.2
 Flask-SQLAlchemy==3.0.5
 Flask-WTF==1.1.1
-greenlet==2.0.2
 gunicorn==22.0.0
 idna==3.4
 itsdangerous==2.1.2
