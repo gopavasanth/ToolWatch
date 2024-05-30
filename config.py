@@ -5,9 +5,9 @@ load_dotenv()
 
 curr_env = os.environ['MODE'] if 'MODE' in os.environ else 'development'
 DB_URL = "tools.db.svc.wikimedia.cloud" if curr_env == 'production' else "localhost"
-DB_USERNAME = os.getenv('DB_USERNAME') if curr_env == 'production' else "root"
-DB_PASSWORD = os.getenv('DB_PASSWORD') if curr_env == 'production' else "toolwatch"
-DB_NAME = os.getenv('DB_NAME') if curr_env == 'production' else "toolwatch"
+DB_USERNAME = os.getenv('TOOL_TOOLSDB_USER') if curr_env == 'production' else "root"
+DB_PASSWORD = os.getenv('TOOL_TOOLSDB_PASSWORD') if curr_env == 'production' else "toolwatch"
+DB_NAME = f"{DB_USERNAME}__toolwatch" if curr_env == 'production' else "toolwatch"
 
 config = {
     'MARIADB_URI': f'mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_URL}:3306/{DB_NAME}',
