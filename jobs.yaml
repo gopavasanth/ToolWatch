@@ -1,10 +1,10 @@
 ---
 # a cronjob
 - name: periodic-crawl
-  command: "dialy_crawl"
+  command: "daily_crawl"
   image: tool-tool-watch/tool-tool-watch:latest
   schedule: "@daily"
   emails: onfailure
 - name: special-restart-crawl
-  command: "dialy_crawl"
+  command: "daily_crawl"
   image: tool-tool-watch/tool-tool-watch:latest
