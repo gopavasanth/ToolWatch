@@ -20,25 +20,66 @@ cd ToolWatch && git pull && ./scripts/toolforge-update.sh
    - For Unix/Linux: `source venv/bin/activate`
 5. Install the dependencies: `pip install -r requirements.txt`
 
-## Database
+### Create the `toolwatch` Database and User in MariaDB
 
-1. Before starting the app, you need to start the MariaDB instance on your local device.
-2. You can install the MariaDB from [here](https://mariadb.com/downloads/), or other sources.
-3. After installing the MariaDB, you need to create a database with the following credentials:
+**a. Log into MariaDB as the Root User**
 
-   - database name: `toolwatch`
-   - username: `root`
-   - password: `toolwatch`
+First, you need to access the MariaDB server using the root account. Open your terminal and execute:
 
-4. These credentials are defined in `config.py` file.
+```bash
+sudo mysql -u root -p
+```
+
+You'll be prompted to enter the root password. If you haven't set one yet, you might need to secure your MariaDB installation first.
+
+**b. Create the `toolwatch` Database**
+
+Once you're logged in, create the new database:
+
+```sql
+CREATE DATABASE toolwatch;
+```
+
+**c. Create a New User `toolwatch` with Password `toolwatch`**
+
+It's a best practice **not** to use the `root` user for your applications. Instead, create a dedicated user with specific privileges:
+
+```sql
+CREATE USER 'toolwatch'@'localhost' IDENTIFIED BY 'toolwatch';
+```
+
+**d. Grant All Privileges on the `toolwatch` Database to the `toolwatch` User**
+
+Assign the necessary permissions to the newly created user:
+
+```sql
+GRANT ALL PRIVILEGES ON toolwatch.* TO 'toolwatch'@'localhost';
+```
+
+**e. Apply the Changes**
+
+Ensure that MariaDB reloads the privilege tables to recognize the new user and permissions:
+
+```sql
+FLUSH PRIVILEGES;
+```
+
+**f. Exit MariaDB**
+
+```sql
+EXIT;
+```
+
+**g. Open `config.py` in your preferred text editor and update the user name to `toolwatch`**
 
 > _For production, we use Wikimedia Cloud database, and for production purposes we may need to create a .env file, with variables defined._
 
 ## Usage
 
 1. Run the database service (MariaDB instance, if running locally).
-2. Run the Flask app: `python app.py`
-3. Open your web browser and visit `http://localhost:5000` to view the tool health status.
+2. After setting it up locally, run the cron.py file: `python cron.py`, which is scheduled to run automatically every 24 hours, manually execute it once to trigger the data crawling process. The run should take approximately 45 minutes to complete.
+3. Run the Flask app: `python app.py`
+4. Open your web browser and visit `http://localhost:5000` to view the tool health status.
 
 ## Directory Structure
 
