@@ -14,28 +14,39 @@ app = Flask(__name__)
 app.config["MARIADB_URI"] = config["MARIADB_URI"]
 page_limit = config["page_limit"]
 
-
 @app.route("/")
 def index():
     session = Session()
     curr_page = int(request.args.get("page", 1))
     tools = session.query(Tool).all()
+    print(tools)
+    # Pagination logic
     paginated_tools = tools[(curr_page - 1) * page_limit : curr_page * page_limit]
+
+    # Calculate health stats
+    total_tools = len(set(tools))
+    tools_up = sum(1 for tool in tools if tool.health_status == True)
+    tools_down = total_tools - tools_up
 
     was_crawled = []
     for tool in paginated_tools:
         url_parsed = urlparse(tool.url)
-        if url_parsed.hostname != None and "toolforge.org" in url_parsed.hostname:
+        if url_parsed.hostname is not None and "toolforge.org" in url_parsed.hostname:
             was_crawled.append(True)
         else:
             was_crawled.append(False)
+    
     return render_template(
         "index.html",
         tools=paginated_tools,
         was_crawled=was_crawled,
         curr_page=curr_page,
         total_pages=tools[0].total_pages,
+        tools_up=tools_up,
+        tools_down=tools_down,
+        total_tools=total_tools
     )
+
 
 
 @app.route("/search")
