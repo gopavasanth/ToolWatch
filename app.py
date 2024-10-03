@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from urllib.parse import urlparse
+import re
 
 from flask import Flask, abort, render_template, request
 from sqlalchemy import extract
@@ -18,34 +19,45 @@ page_limit = config["page_limit"]
 def index():
     session = Session()
     curr_page = int(request.args.get("page", 1))
+    sort_by = request.args.get("sort_by", "title")  
+    order = request.args.get("order", "asc") 
+
     tools = session.query(Tool).all()
+
+    # Sorting tools by title after normalizing (removing non-alphanumeric characters from the start and stripping spaces)
+    if sort_by == "title":
+        tools = sorted(
+            tools, 
+            key=lambda x: re.sub(r'^\W+', '', x.title.strip().lower()), 
+            reverse=(order == "desc")
+        )
+
+    # Pagination logic
     paginated_tools = tools[(curr_page - 1) * page_limit : curr_page * page_limit]
 
     # Calculate health stats
-    total_tools = len(set(tools))
-    tools_up = sum(1 for tool in tools if tool.health_status == True)
+    total_tools = len(tools)
+    tools_up = sum(1 for tool in tools if tool.health_status)
     tools_down = total_tools - tools_up
 
+    # Identify which tools were crawled
     was_crawled = []
     for tool in paginated_tools:
         url_parsed = urlparse(tool.url)
-        if url_parsed.hostname is not None and "toolforge.org" in url_parsed.hostname:
-            was_crawled.append(True)
-        else:
-            was_crawled.append(False)
-    
+        was_crawled.append(bool(url_parsed.hostname and "toolforge.org" in url_parsed.hostname))
+
     return render_template(
         "index.html",
         tools=paginated_tools,
         was_crawled=was_crawled,
         curr_page=curr_page,
-        total_pages=tools[0].total_pages,
+        total_pages=(total_tools // page_limit) + 1,
         tools_up=tools_up,
         tools_down=tools_down,
-        total_tools=total_tools
+        total_tools=total_tools,
+        sort_by=sort_by,
+        order=order,
     )
-
-
 
 @app.route("/search")
 def search():

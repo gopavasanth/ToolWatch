@@ -136,19 +136,24 @@
       <table class="table table-striped" style="table-layout: fixed">
         <thead>
           <tr>
-            <th>Tool</th>
+            <th>
+              <a href="{{ url_for('index', sort_by='title', order='asc' if order == 'desc' else 'desc') }}" style="text-decoration: none; color: inherit;">
+                Tool
+                {% if sort_by == 'title' %}
+                  {% if order == 'asc' %}
+                    🔼
+                  {% else %}
+                    🔽
+                  {% endif %}
+                {% endif %}
+              </a>
+            </th>
             <th>Description</th>
             <th>Author</th>
-            <th
-              data-toggle="tooltip"
-              data-placement="top"
-              title="Whether the tool is available or not"
-            >
+            <th data-toggle="tooltip" data-placement="top" title="Whether the tool is available or not">
               Health
             </th>
-            <th>
-              Details
-            </th>
+            <th>Details</th>
           </tr>
         </thead>
         <tbody>
