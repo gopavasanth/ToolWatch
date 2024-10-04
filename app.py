@@ -24,6 +24,7 @@ def index():
 
     tools = session.query(Tool).all()
 
+    # tools = session.query(Tool).filter(Tool.tool_type == "web app").all()
     # Sorting tools by title after normalizing (removing non-alphanumeric characters from the start and stripping spaces)
     if sort_by == "title":
         tools = sorted(

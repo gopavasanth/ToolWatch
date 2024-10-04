@@ -21,6 +21,7 @@ class Tool(Base):
     repository = Column(Text)
     license = Column(Text)
     technology_used = Column(Text)
+    tool_type = Column(Text)
     bugtracker_url = Column(Text)
     health_status = Column(Boolean, default=False)
     last_checked = Column(TIMESTAMP, default=datetime.datetime.now)

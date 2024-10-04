@@ -32,6 +32,7 @@ def fetch_and_store_data():
                 repository=tool_data.get('repository', ''),  # Use .get() to handle missing keys
                 license=tool_data.get('license', ''),  # Use .get() to handle missing keys
                 technology_used=', '.join(tool_data.get('technology_used', [])),  # Use .get() to handle missing keys
+                tool_type=tool_data.get('tool_type'),
                 bugtracker_url=tool_data.get('bugtracker_url', ''),  # Use .get() to handle missing keys
                 page_num = page,
                 total_pages = total_pages
