@@ -34,7 +34,8 @@ def fetch_and_store_data():
                 technology_used=', '.join(tool_data.get('technology_used', [])),  # Use .get() to handle missing keys
                 bugtracker_url=tool_data.get('bugtracker_url', ''),  # Use .get() to handle missing keys
                 page_num = page,
-                total_pages = total_pages
+                total_pages = total_pages,
+                web_tool = tool_data.get('tool_type') == 'web app'
             )
             session.add(tool)
     session.commit()
@@ -54,32 +55,22 @@ def ping_every_30_minutes():
     engine = create_engine(config['MARIADB_URI'])
     SessionInit = sessionmaker(bind=engine)
     session = SessionInit()
-    tools = session.query(Tool).all()
-    urls = []
+    # Fetch all tools from the database, excluding the ones that are not web tools
+    tools = session.query(Tool).filter(Tool.web_tool == True).all()
     print("Checking health status of tools")
-    for t in tools:
-        urls.append(t.url)
-    print('Gathered urls')
-    results = []
-    last_checkeds = []
-    for url in urls:
+    for tool in tools:
+        url = tool.url
         time.sleep(0.01)
         url_parsed = urlparse(url)
-        last_checkeds.append(datetime.datetime.now())
         print( f'[*] Checking health of {url} with hostname {url_parsed.hostname}' )
         if  url_parsed.hostname != None and 'toolforge.org' in url_parsed.hostname:
             result = sync_get(url)
         else:
             result = False # Don't check the health of non-toolforge.org urls
         print(f'[*] {url} is {result}')
-        results.append(result)
-
-    print('Gathered results')
-    for tool in tools:
-        result = results.pop(0)
         tool.health_status = result
-        tool.last_checked = last_checkeds.pop(0)
+        tool.last_checked = datetime.datetime.now()
         record = Record(tool=tool, health_status=result)
         session.add(tool)
         session.add(record)
-    session.commit()
+        session.commit()
