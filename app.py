@@ -22,7 +22,8 @@ def index():
     sort_by = request.args.get("sort_by", "title")  
     order = request.args.get("order", "asc") 
 
-    tools = session.query(Tool).all()
+    # Fetch all tools from the database, excluding the ones that are not web tools
+    tools = session.query(Tool).filter(Tool.web_tool == True).all()
 
     # Sorting tools by title after normalizing (removing non-alphanumeric characters from the start and stripping spaces)
     if sort_by == "title":

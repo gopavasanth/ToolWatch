@@ -22,6 +22,7 @@ class Tool(Base):
     license = Column(Text)
     technology_used = Column(Text)
     bugtracker_url = Column(Text)
+    web_tool = Column(Boolean, default=False)
     health_status = Column(Boolean, default=False)
     last_checked = Column(TIMESTAMP, default=datetime.datetime.now)
     page_num = Column(Integer)
