@@ -85,34 +85,25 @@
         </div>
       </div>
     </nav>
-    <div
-      style="position: sticky; top: 5px; background-color: white; z-index: 1"
-    >
-      <form
-        action="{{ url_for('search') }}"
-        method="GET"
-        style="display: flex; padding: 15px; justify-content: center"
-      >
-        <div class="form-outline" style="width: 75vw">
-          <input
-            type="search"
-            id="search"
-            name="search"
-            class="wiki-search-input"
-            placeholder="Search by Author, URL or Title"
-            `{%
-            if
-            search_term
-            %}
-            value="{{ search_term }}"
-            {%
-            endif
-            %}`
-          />
+    <div class="container mt-4">
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <form action="{{ url_for('search') }}" method="GET" class="input-group">
+            <input
+              type="search"
+              id="search"
+              name="search"
+              class="form-control"
+              placeholder="Search tools by title, author, or description"
+              `{% if search_term %} value="{{ search_term }}" {% endif %}`
+            />
+            <button type="submit" class="btn btn-primary">
+              <b>Search</b>
+            </button>
+          </form>
         </div>
-        <button type="submit" class="wiki-submit-btn"><b>Search</b></button>
-      </form>
-    </div>
+      </div>
+    </div>    
     <div class="container mt-4">
       <div class="container mt-4">
         <div class="row">

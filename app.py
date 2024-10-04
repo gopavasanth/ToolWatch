@@ -64,21 +64,27 @@ def search():
     session = Session()
     search_term = request.args.get("search", "")
     tools = session.query(Tool).all()
+    
+    # Filter tools by search term in URL, title, author, or description
     filtered_tools = []
     for tool in tools:
         if (
             search_term.lower() in tool.url.lower()
             or search_term.lower() in tool.title.lower()
             or search_term.lower() in tool.author.lower()
+            or search_term.lower() in tool.description.lower()
         ):
             filtered_tools.append(tool)
+    
+    # Check if the tool was crawled (has a toolforge.org hostname)
     was_crawled = []
     for tool in filtered_tools:
         url_parsed = urlparse(tool.url)
-        if url_parsed.hostname != None and "toolforge.org" in url_parsed.hostname:
+        if url_parsed.hostname is not None and "toolforge.org" in url_parsed.hostname:
             was_crawled.append(True)
         else:
             was_crawled.append(False)
+    
     return render_template(
         "index.html",
         tools=filtered_tools,
