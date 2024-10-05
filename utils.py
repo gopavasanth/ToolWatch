@@ -22,6 +22,11 @@ def fetch_and_store_data():
         page_data = data[start:end]
 
         for tool_data in page_data:
+            if session.query(Tool).filter(Tool.name == tool_data['name']).count() > 0:
+                tool = session.query(Tool).filter(Tool.name == tool_data['name']).first()
+                tool.web_tool = tool_data.get('tool_type') == 'web app'
+                session.commit()
+                continue
             tool = Tool(
                 name=tool_data['name'],
                 title=tool_data['title'],
