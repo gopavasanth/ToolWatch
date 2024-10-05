@@ -13,8 +13,6 @@ if __name__ == '__main__':
     print("Running Production Server...")
     Base.metadata.create_all(engine)
     session = Session()
-    if(session.query(Tool).count() == 0):
-        # if db is empty, fetch data
-        print("Fetching and storing data...")
-        fetch_and_store_data()
+    print("Fetching and storing data...")
+    fetch_and_store_data()
     ping_every_30_minutes()
