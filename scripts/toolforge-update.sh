@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 toolforge build start https://github.com/gopavasanth/ToolWatch
-toolforge webservice python3.11 restart
+toolforge webservice --mount=none buildservice start
 toolforge jobs load jobs.yaml
