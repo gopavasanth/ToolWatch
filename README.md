@@ -34,6 +34,52 @@ cd ToolWatch && git pull && ./scripts/toolforge-update.sh
 
 > _For production, we use Wikimedia Cloud database, and for production purposes we may need to create a .env file, with variables defined._
 
+### Connect to DB Instance
+
+To connect to the DB instance, use the following command:
+
+```sh
+ssh -L:3307:tools.db.svc.wikimedia.cloud:3306 gopavasanth@login.toolforge.org
+```
+
+### Backup
+To backup the database, run:
+
+```sh
+mariadb-dump --defaults-file=$(pwd)/replica.my.cnf --skip-ssl -h 0.0.0.0 -P 3307 s55491__toolwatch > backup.sql
+```
+
+### Jobs
+* View job logs:
+
+```sh
+toolforge jobs logs -f special-restart-crawl
+```
+
+* List of jobs:
+
+```sh
+toolforge jobs list
+```
+
+## Restart Toolforge web services:
+
+```sh
+toolforge webservices restart
+```
+
+## Debug Production Container Locally
+
+To debug the production container in local, run:
+
+```sh
+docker run -ti -u 0 --entrypoint bash tools-harbor.wmcloud.org/tool-tool-watch/tool-tool-watch:latest
+```
+
+### Grafana Monitoring
+Access the Grafana dashboard https://grafana.wmcloud.org/d/TJuKfnt4z/kubernetes-namespace?orgId=1&var-cluster=prometheus-tools&var-namespace=tool-tool-watch
+
+
 ## Usage
 
 1. Run the database service (MariaDB instance, if running locally).
