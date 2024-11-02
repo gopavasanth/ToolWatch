@@ -1,20 +1,31 @@
-import requests
-import datetime
+# cron.py
 import time
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from model import Tool,Base,engine,Session
-from urllib.parse import urlparse
-from config import config
-from utils import ping_every_30_minutes,fetch_and_store_data
+import requests
+from datetime import datetime
 
+from app import app  # Importing the app from app.py
+from model import db, Tool
+from utils import fetch_and_store_data
 
-if __name__ == '__main__':
-    print("Running Production Server...")
-    Base.metadata.create_all(engine)
-    session = Session()
-    if(session.query(Tool).count() == 0):
-        # if db is empty, fetch data
-        print("Fetching and storing data...")
+def ping_tools():
+    # Create application context
+    with app.app_context():
+        tools = Tool.query.all()
+        print(tools)
+        for tool in tools:
+            try:
+                response = requests.get(tool.url)
+                print(f"Pinging {tool.url}...")
+                tool.health_status = response.status_code == 200
+            except requests.RequestException:
+                tool.health_status = False
+            tool.last_checked = datetime.now()
+            db.session.commit()
+
+if __name__ == "__main__":
+    while True:
+        print("Pinging tools...")
         fetch_and_store_data()
-    ping_every_30_minutes()
+        ping_tools()
+        print("Sleeping for 30 minutes...")
+        time.sleep(1800)

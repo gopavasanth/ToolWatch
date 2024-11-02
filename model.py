@@ -1,37 +1,39 @@
-from sqlalchemy import create_engine, Column, Integer, Boolean, TIMESTAMP, Text
-from sqlalchemy.orm import sessionmaker, declarative_base,relationship, mapped_column
-from sqlalchemy import ForeignKey
+from datetime import datetime
 
-import datetime
-from config import config
+from flask_sqlalchemy import SQLAlchemy
 
-engine = create_engine(config['MARIADB_URI'])
-Session = sessionmaker(bind=engine)
-Base = declarative_base()  # Use declarative_base from sqlalchemy.orm
+db = SQLAlchemy()
 
-class Tool(Base):
+class Tool(db.Model):
     __tablename__ = 'tools'
-    id = Column(Integer, primary_key=True)
-    name = Column(Text)
-    title = Column(Text)
-    description = Column(Text)
-    url = Column(Text)
-    keywords = Column(Text)
-    author = Column(Text)
-    repository = Column(Text)
-    license = Column(Text)
-    technology_used = Column(Text)
-    bugtracker_url = Column(Text)
-    health_status = Column(Boolean, default=False)
-    last_checked = Column(TIMESTAMP, default=datetime.datetime.now)
-    page_num = Column(Integer)
-    total_pages = Column(Integer)
-    records = relationship("Record", back_populates="tool")
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text)
+    title = db.Column(db.Text)
+    description = db.Column(db.Text)
+    url = db.Column(db.Text)
+    keywords = db.Column(db.Text)
+    author = db.Column(db.Text)
+    repository = db.Column(db.Text)
+    license = db.Column(db.Text)
+    technology_used = db.Column(db.Text)
+    bugtracker_url = db.Column(db.Text)
+    health_status = db.Column(db.Boolean, default=False)
+    last_checked = db.Column(db.TIMESTAMP, default=datetime.now)
+    page_num = db.Column(db.Integer)
+    total_pages = db.Column(db.Integer)
+    
+    # Relationship to Record model
+    records = db.relationship("Record", back_populates="tool")
 
-class Record(Base):
-    __tablename__ = "records"
-    id = Column(Integer, primary_key=True)
-    tool_id = mapped_column(ForeignKey("tools.id")) 
-    tool = relationship("Tool", back_populates="records")
-    timestamp = Column(TIMESTAMP, default=datetime.datetime.now)
-    health_status = Column(Boolean, default=False)
+class Record(db.Model):
+    __tablename__ = 'records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    tool_id = db.Column(db.Integer, db.ForeignKey("tools.id"))
+    timestamp = db.Column(db.TIMESTAMP, default=datetime.now)
+    health_status = db.Column(db.Boolean, default=False)
+    
+    # Relationship to Tool model
+    tool = db.relationship("Tool", back_populates="records")
+
