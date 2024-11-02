@@ -85,6 +85,15 @@
         </div>
       </div>
     </nav>
+
+    <!-- Warning Alert -->
+    <div class="d-flex justify-content-center mt-2">
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Notice!</strong> Currently, only the health status of web-based tools is being monitored in ToolWatch.
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    </div>
+
     <div class="container mt-4">
       <div class="row justify-content-center">
         <div class="col-md-8">
@@ -139,10 +148,41 @@
                 {% endif %}
               </a>
             </th>
-            <th>Description</th>
-            <th>Author</th>
-            <th data-toggle="tooltip" data-placement="top" title="Whether the tool is available or not">
-              Health
+            <th>
+              <a href="{{ url_for('index', sort_by='description', order='asc' if order == 'desc' else 'desc') }}" style="text-decoration: none; color: inherit;">
+                Description
+                {% if sort_by == 'description' %}
+                  {% if order == 'asc' %}
+                    🔼
+                  {% else %}
+                    🔽
+                  {% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="{{ url_for('index', sort_by='author', order='asc' if order == 'desc' else 'desc') }}" style="text-decoration: none; color: inherit;">
+                Author
+                {% if sort_by == 'author' %}
+                  {% if order == 'asc' %}
+                    🔼
+                  {% else %}
+                    🔽
+                  {% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="{{ url_for('index', sort_by='health_status', order='asc' if order == 'desc' else 'desc') }}" style="text-decoration: none; color: inherit;" data-toggle="tooltip" data-placement="top" title="Whether the tool is available or not">
+                Health
+                {% if sort_by == 'health_status' %}
+                  {% if order == 'asc' %}
+                    🔼
+                  {% else %}
+                    🔽
+                  {% endif %}
+                {% endif %}
+              </a>
             </th>
             <th>Details</th>
           </tr>
@@ -154,13 +194,11 @@
               <a
                 href="{{ tool.url }}"
                 target="_blank"
-                style="word-wrap: break-word;
-                text-decoration: none;"
+                style="word-wrap: break-word; text-decoration: none;"
               >
                 {{ tool.title }}
               </a>
             </td>
-            
             <td
               data-toggle="tooltip"
               data-placement="top"
@@ -213,6 +251,8 @@
           {% endfor %}
         </tbody>
       </table>
+      
+      
       <div class="alert alert-primary" role="alert">
         Note: URLs that do not have a <code>parsed_url.netloc</code> of
         <code>*.toolforge.org</code> are not shown.
