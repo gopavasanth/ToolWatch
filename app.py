@@ -8,7 +8,7 @@ from sqlalchemy import extract
 from sqlalchemy.orm.exc import NoResultFound
 
 from config import config
-from model import Base, Record, Session, Tool, engine
+from model import Base, Record, Session, Tool, engine, Tool_preferences, User
 from utils import fetch_and_store_data
 
 app = Flask(__name__)
@@ -122,6 +122,15 @@ def show_details(id):
         selected_month=month,
     )
 
+@app.route("/profile", methods=["GET", "POST"])
+def profile(username):
+    session = Session()
+    tools = session.query(Tool_preferences).filter(Tool_preferences.user_name == username).all()
+    return render_template(
+        "profile.html", 
+        tools=tools,
+        username=username
+    )
 
 if __name__ == "__main__":
     print("Running Development Server...")

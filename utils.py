@@ -22,6 +22,19 @@ def fetch_and_store_data():
         page_data = data[start:end]
 
         for tool_data in page_data:
+            existing_user = session.query(User).filter(User.username == tool_data['author'][0]['name']).first()
+            if not existing_user:
+                user = User(
+                    username = tool_data['author'][0]['name']
+                )
+                session.add(user)
+
+            tool_preferences = Tool_preferences(
+                user_name = tool_data['author'][0]['name'],
+                tool_id = session.query(Tool).filter(Tool.name == tool_data['name']).first().id
+            )
+            session.add(tool_preferences)
+
             if session.query(Tool).filter(Tool.name == tool_data['name']).count() > 0:
                 tool = session.query(Tool).filter(Tool.name == tool_data['name']).first()
                 tool.web_tool = tool_data.get('tool_type') == 'web app'
@@ -44,10 +57,6 @@ def fetch_and_store_data():
             )
             session.add(tool)
 
-            tool_preferences = Tool_preferences(
-                user_name = session.query(User).filter(User.username == tool_data['author'][0]['name']),
-                tool_id = session.query(Tool).filter(Tool.name == tool_data['name']).first().id
-            )
     session.commit()
 
 def sync_get(url):

@@ -47,3 +47,4 @@ class Tool_preferences(Base):
     id = Column(Integer, primary_key=True)
     user_name = Column(ForeignKey("users.username"))
     tool_id = Column(ForeignKey("tools.id"))
+    interval = Column(Integer, default=0)
