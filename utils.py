@@ -43,6 +43,11 @@ def fetch_and_store_data():
                 web_tool = tool_data.get('tool_type') == 'web app'
             )
             session.add(tool)
+
+            tool_preferences = Tool_preferences(
+                user_name = session.query(User).filter(User.username == tool_data['author'][0]['name']),
+                tool_id = session.query(Tool).filter(Tool.name == tool_data['name']).first().id
+            )
     session.commit()
 
 def sync_get(url):

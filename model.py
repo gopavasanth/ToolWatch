@@ -45,5 +45,5 @@ class User(Base):
 class Tool_preferences(Base):
     __tablename__ = "tool_preferences"
     id = Column(Integer, primary_key=True)
-    user_name = Column(ForeignKey("users.id"))
-    tool_id = Column(ForeignKey("tools.id"))
+    user_name = Column(ForeignKey("User.username"))
+    tool_id = Column(ForeignKey("Tool.id"))
