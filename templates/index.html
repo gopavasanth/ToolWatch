@@ -58,8 +58,8 @@
         <button
           class="navbar-toggler"
           type="button"
-          data-toggle="collapse"
-          data-target="#navbarNav"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
           aria-controls="navbarNav"
           aria-expanded="false"
           aria-label="Toggle navigation"
@@ -68,18 +68,22 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
+          {% if user!=none %}
+          <li class="nav-item">
+            <div class="nav-link">
+              <span class="navbar-text text-light">{{ user["username"] }}</span>
+            </div>
+          </li>
+          {% endif %}
             <li class="nav-item">
-              <div class="nav-link active">
-                <!-- check if last_checked is present in any one of the tool -->
-                Last crawled on {% if tools and tools[0] and
-                tools[0].last_checked %}
-                <span>{{tools[0].last_checked}}</span>
+              <div class="nav-link">
+                {% if user is none %}
+                <a href="/login" class="link-light">Login</a>
                 {% else %}
-                <span>-</span>
+                <a href="/logout" class="link-secondary">Logout</a>
                 {% endif %}
               </div>
             </li>
-
             <!-- Add more navigation items as needed -->
           </ul>
         </div>
@@ -343,6 +347,15 @@
           href="https://github.com/gopavasanth/toolwatch"
           >Source code (MIT License)</a
         >
+        <div class="tool-next-timer">
+              <!-- check if last_checked is present in any one of the tool -->
+              Last crawled on {% if tools and tools[0] and
+              tools[0].last_checked %}
+              <span>{{tools[0].last_checked}}</span>
+              {% else %}
+              <span>-</span>
+              {% endif %}
+        </div>
         <div class="tool-next-timer">
           Next crawl in <span class="header-timer-space">00h 00m 00s</span>
         </div>

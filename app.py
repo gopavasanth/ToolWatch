@@ -1,26 +1,73 @@
+import os
 import json
 from datetime import datetime
 from urllib.parse import urlparse
 import re
+from authlib.integrations.flask_client import OAuth
 
-from flask import Flask, abort, render_template, request
+from flask import Flask, render_template, request, redirect, session as flask_session
 from sqlalchemy import extract
-from sqlalchemy.orm.exc import NoResultFound
 
 from config import config
-from model import Base, Record, Session, Tool, engine
+from model import Base, Record, Session, Tool, engine, User
 from utils import fetch_and_store_data
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = config["SECRET"]
 app.config["MARIADB_URI"] = config["MARIADB_URI"]
+app.config["SESSION_COOKIE_SECURE"] = True if "MODE" in os.environ else False
 page_limit = config["page_limit"]
+
+oauth = OAuth(app)
+oauth.register(
+    name="toolwatch",
+    client_id=config["CLIENT_ID"],
+    client_secret=config["CLIENT_SECRET"],
+    access_token_url="https://meta.wikimedia.org/w/rest.php/oauth2/access_token",
+    access_token_params=None,
+    authorize_url="https://meta.wikimedia.org/w/rest.php/oauth2/authorize",
+    authorize_params=None,
+    api_base_url="https://meta.wikimedia.org/w/rest.php/oauth2",
+)
+tool = oauth.create_client("toolwatch")
+
+
+@app.route("/login")
+def login():
+    toolwatch = oauth.create_client("toolwatch")
+    return toolwatch.authorize_redirect()
+
+
+@app.route("/logout")
+def logout():
+    flask_session.pop("user")
+    return redirect("/")
+
+
+@app.route("/api/auth/mediawiki/callback")
+def authorize():
+    oauth.toolwatch.authorize_access_token()
+    profile_resp = oauth.toolwatch.get("oauth2/resource/profile")
+    profile_resp.raise_for_status()
+    profile = profile_resp.json()
+
+    session = Session()
+    user = session.get(User, profile["username"])
+    flask_session["user"] = {"username": profile["username"]}
+    # Obtain the user's email from Oauth
+    if user is not None and user.email is None:
+        user.email = profile["email"]
+    session.commit()
+
+    return redirect("/")
+
 
 @app.route("/")
 def index():
     session = Session()
     curr_page = int(request.args.get("page", 1))
-    sort_by = request.args.get("sort_by", "title")  
-    order = request.args.get("order", "asc") 
+    sort_by = request.args.get("sort_by", "title")
+    order = request.args.get("order", "asc")
 
     # Fetch all tools from the database, excluding the ones that are not web tools
     tools = session.query(Tool).filter(Tool.web_tool == True).all()
@@ -28,9 +75,9 @@ def index():
     # Sorting tools by title after normalizing (removing non-alphanumeric characters from the start and stripping spaces)
     if sort_by == "title":
         tools = sorted(
-            tools, 
-            key=lambda x: re.sub(r'^\W+', '', x.title.strip().lower()), 
-            reverse=(order == "desc")
+            tools,
+            key=lambda x: re.sub(r"^\W+", "", x.title.strip().lower()),
+            reverse=(order == "desc"),
         )
 
     # Pagination logic
@@ -45,10 +92,13 @@ def index():
     was_crawled = []
     for tool in paginated_tools:
         url_parsed = urlparse(tool.url)
-        was_crawled.append(bool(url_parsed.hostname and "toolforge.org" in url_parsed.hostname))
+        was_crawled.append(
+            bool(url_parsed.hostname and "toolforge.org" in url_parsed.hostname)
+        )
 
     return render_template(
         "index.html",
+        user=flask_session.get("user"),
         tools=paginated_tools,
         was_crawled=was_crawled,
         curr_page=curr_page,
@@ -60,12 +110,13 @@ def index():
         order=order,
     )
 
+
 @app.route("/search")
 def search():
     session = Session()
     search_term = request.args.get("search", "")
     tools = session.query(Tool).all()
-    
+
     # Filter tools by search term in URL, title, author, or description
     filtered_tools = []
     for tool in tools:
@@ -76,7 +127,7 @@ def search():
             or search_term.lower() in tool.description.lower()
         ):
             filtered_tools.append(tool)
-    
+
     # Check if the tool was crawled (has a toolforge.org hostname)
     was_crawled = []
     for tool in filtered_tools:
@@ -85,7 +136,7 @@ def search():
             was_crawled.append(True)
         else:
             was_crawled.append(False)
-    
+
     return render_template(
         "index.html",
         tools=filtered_tools,
