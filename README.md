@@ -1,4 +1,4 @@
-# ToolWatch Status Application
+# ToolWatch
 
 ToolWatch checks the health status of various Wikimedia tools and displays them in a user-friendly UI.
 More at: https://phabricator.wikimedia.org/T341379
@@ -20,12 +20,13 @@ cd ToolWatch && git pull && ./scripts/toolforge-update.sh
    - For Unix/Linux: `source venv/bin/activate`
 5. Install the dependencies: `pip install -r requirements.txt`
 
-## Database
+## Usage
+
+### Database
 
 1. Before starting the app, you need to start the MariaDB instance on your local device.
 2. You can install the MariaDB from [here](https://mariadb.com/downloads/), or other sources.
 3. After installing the MariaDB, you need to create a database with the following credentials:
-
    - database name: `toolwatch`
    - username: `root`
    - password: `toolwatch`
@@ -34,9 +35,18 @@ cd ToolWatch && git pull && ./scripts/toolforge-update.sh
 
 > _For production, we use Wikimedia Cloud database, and for production purposes we may need to create a .env file, with variables defined._
 
+### Starting the app
+
+1. Run the database service (MariaDB instance, if running locally).
+2. Run the Flask app: `python app.py`
+3. Open your web browser and visit `http://localhost:5000` to view the tool health status.
+
+
+## Production
+
 ### Connect to DB Instance
 
-To connect to the DB instance, use the following command:
+To connect to the production DB instance, use the following command:
 
 ```sh
 ssh -L:3307:tools.db.svc.wikimedia.cloud:3306 gopavasanth@login.toolforge.org
@@ -62,13 +72,13 @@ toolforge jobs logs -f special-restart-crawl
 toolforge jobs list
 ```
 
-## Restart Toolforge web services:
+### Restart Toolforge web services:
 
 ```sh
 toolforge webservices restart
 ```
 
-## Debug Production Container Locally
+### Debug Production Container Locally
 
 To debug the production container in local, run:
 
@@ -79,12 +89,6 @@ docker run -ti -u 0 --entrypoint bash tools-harbor.wmcloud.org/tool-tool-watch/t
 ### Grafana Monitoring
 Access the Grafana dashboard https://grafana.wmcloud.org/d/TJuKfnt4z/kubernetes-namespace?orgId=1&var-cluster=prometheus-tools&var-namespace=tool-tool-watch
 
-
-## Usage
-
-1. Run the database service (MariaDB instance, if running locally).
-2. Run the Flask app: `python app.py`
-3. Open your web browser and visit `http://localhost:5000` to view the tool health status.
 
 ## Directory Structure
 
