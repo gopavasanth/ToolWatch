@@ -36,3 +36,14 @@ class Record(Base):
     tool = relationship("Tool", back_populates="records")
     timestamp = Column(TIMESTAMP, default=datetime.datetime.now)
     health_status = Column(Boolean, default=False)
+
+class User(Base):
+    __tablename__ = "users"
+    email = Column(Text)
+    username = Column(Text, primary_key=True)
+
+class Tool_preferences(Base):
+    __tablename__ = "tool_preferences"
+    id = Column(Integer, primary_key=True)
+    user_name = Column(ForeignKey("users.id"))
+    tool_id = Column(ForeignKey("tools.id"))

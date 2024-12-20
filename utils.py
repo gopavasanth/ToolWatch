@@ -2,7 +2,7 @@ import os
 import requests
 import datetime
 import time
-from model import Session, Tool, Base, engine, Record
+from model import Session, Tool, Base, engine, Record, Tool_preferences, User
 from config import config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
