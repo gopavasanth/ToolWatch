@@ -4,9 +4,10 @@ import datetime
 import time
 from model import Session, Tool, Base, engine, Record, Tool_preferences, User
 from config import config
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, desc, and_
 from sqlalchemy.orm import sessionmaker
 from urllib.parse import urlparse
+import yagmail
 
 page_limit = config['page_limit']
 
@@ -29,12 +30,6 @@ def fetch_and_store_data():
                 )
                 session.add(user)
 
-            tool_preferences = Tool_preferences(
-                user_name = tool_data['author'][0]['name'],
-                tool_id = session.query(Tool).filter(Tool.name == tool_data['name']).first().id
-            )
-            session.add(tool_preferences)
-
             if session.query(Tool).filter(Tool.name == tool_data['name']).count() > 0:
                 tool = session.query(Tool).filter(Tool.name == tool_data['name']).first()
                 tool.web_tool = tool_data.get('tool_type') == 'web app'
@@ -56,6 +51,12 @@ def fetch_and_store_data():
                 web_tool = tool_data.get('tool_type') == 'web app'
             )
             session.add(tool)
+
+            tool_preferences = Tool_preferences(
+                user_name = tool_data['author'][0]['name'],
+                tool_id = session.query(Tool).filter(Tool.name == tool_data['name']).first().id
+            )
+            session.add(tool_preferences)
 
     session.commit()
 
@@ -93,3 +94,35 @@ def ping_every_30_minutes():
         session.add(tool)
         session.add(record)
         session.commit()
+
+        if(tool.health_status == False):
+            down_tool = session.query(Tool_preferences).filter(Tool_preferences.id == tool.id).first()
+            last_up = session.query(Record).filter(
+                and_(
+                    Record.tool_id == tool.id,
+                    Record.health_status == True
+                )
+                ).order_by(desc(Record.timestamp)).first()
+            
+            if last_up != None:
+                #Since the cron job runs every 30 minutes, first time it went down will be 30 minutes + last time it was up.
+                if (down_tool.interval*60 >= ((datetime.datetime.now() - last_up.timestamp).total_seconds() + 1800) and down_tool.interval != 0):
+                    send_email(down_tool.user_name,down_tool.tool.name)
+            
+
+
+
+def set_interval(interval,tool):
+    session = Session()
+    tool = session.query(Tool_preferences).filter(Tool_preferences.tool_id == tool).first()
+    tool.interval = interval
+    session.commit()
+
+def send_email(username,tool):
+    print(f"Sending email to {username}")
+    yag = yagmail.SMTP(user='', password='', host='mail.tools.wmcloud.org', port=587)#(email, password)
+    yag.send(
+        to = '',
+        subject="Tool is down",
+        contents = "Hi",
+    )
