@@ -51,8 +51,9 @@ class User(Base):
 class Tool_preferences(Base):
     __tablename__ = "tool_preferences"
     id = Column(Integer, primary_key=True)
+    interval = Column(Integer, default=0)
+    send_email = Column(Boolean, default=True)
     user = relationship("User", back_populates="tool_preferences")
     tool = relationship("Tool", back_populates="tool_preferences")
     tool_id = mapped_column(ForeignKey("tools.id"))
-    user_name = mapped_column(ForeignKey("users.username"))
-    interval = Column(Integer, default=0)
+    user_id = mapped_column(ForeignKey("users.id"))

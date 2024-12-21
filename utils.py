@@ -49,8 +49,9 @@ def fetch_and_store_data():
             )
             session.add(tool)
 
+            user = session.query(User).filter(User.username == tool_data["author"][0]["name"]).one()
             tool_preferences = Tool_preferences(
-                user_name=tool_data["author"][0]["name"],
+                user=user,
                 tool_id=session.query(Tool).filter(Tool.name == tool_data["name"]).first().id,
             )
             session.add(tool_preferences)
