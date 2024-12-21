@@ -9,7 +9,7 @@ from flask import Flask, render_template, request, redirect, session as flask_se
 from sqlalchemy import extract
 
 from config import config
-from model import Base, Record, Session, Tool, engine, Tool_preferences, User
+from model import Base, Record, Session, Tool, engine, Tool_preferences
 from utils import fetch_and_store_data
 
 app = Flask(__name__)
@@ -51,13 +51,7 @@ def authorize():
     profile_resp.raise_for_status()
     profile = profile_resp.json()
 
-    session = Session()
-    user = session.get(User, profile["username"])
     flask_session["user"] = {"username": profile["username"]}
-    # Obtain the user's email from Oauth
-    if user is not None and user.email is None:
-        user.email = profile["email"]
-    session.commit()
 
     return redirect("/")
 
