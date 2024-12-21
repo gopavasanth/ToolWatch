@@ -16,6 +16,7 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = config["SECRET"]
 app.config["MARIADB_URI"] = config["MARIADB_URI"]
 app.config["SESSION_COOKIE_SECURE"] = True if "MODE" in os.environ else False
+app.config["SESSION_COOKIE_HTTPONLY"] = True
 page_limit = config["page_limit"]
 
 oauth = OAuth(app)

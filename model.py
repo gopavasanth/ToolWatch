@@ -43,7 +43,8 @@ class Record(Base):
 
 class User(Base):
     __tablename__ = "users"
-    username = Column(String(500), primary_key=True)
+    id = Column(Integer, primary_key=True)
+    username = Column(String(500), unique=True, nullable=False)
     tool_preferences = relationship("Tool_preferences", back_populates="user")
 
 
