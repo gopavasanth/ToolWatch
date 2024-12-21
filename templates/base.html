@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ToolWatch</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <!-- Add Bootstrap CSS link -->
+    <link rel="stylesheet" href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/css/bootstrap.min.css" />
+  </head>
+  <body>
+    <nav class="flex navbar navbar-expand-lg navbar-dark bg-dark" style="width: 100%">
+      <div class="container" style="font-family: 'Courier New', Courier, monospace">
+        <a class="navbar-brand" href="/"><div class="tool-title">ToolWatch</div></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            {% if session.get('user') is not none %}
+              <li class="nav-item">
+                <div class="nav-link">
+                  <a href="/profile"
+                    class="{% block profile_color %}link-light{% endblock %} link-underline-opacity-0 link-underline-opacity-75-hover">
+                    {{ session.user.username }}
+                  </a>
+                </div>
+              </li>
+            {% endif %}
+            <li class="nav-item">
+              <div class="nav-link">
+                {% if session.get('user') is none %}
+                  <a href="/login" class="link-light">Login</a>
+                {% else %}
+                  <a href="/logout" class="link-secondary">Logout</a>
+                {% endif %}
+              </div>
+            </li>
+            <!-- Add more navigation items as needed -->
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    {% block content %}
+
+    {% endblock %}
+  </body>
+</html>

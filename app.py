@@ -86,13 +86,10 @@ def index():
     was_crawled = []
     for tool in paginated_tools:
         url_parsed = urlparse(tool.url)
-        was_crawled.append(
-            bool(url_parsed.hostname and "toolforge.org" in url_parsed.hostname)
-        )
+        was_crawled.append(bool(url_parsed.hostname and "toolforge.org" in url_parsed.hostname))
 
     return render_template(
         "index.html",
-        user=flask_session.get("user"),
         tools=paginated_tools,
         was_crawled=was_crawled,
         curr_page=curr_page,
@@ -169,14 +166,21 @@ def show_details(id):
 
 
 @app.route("/profile", methods=["GET", "POST"])
-def profile(username):
+def profile():
     session = Session()
-    tools = (
-        session.query(Tool_preferences)
-        .filter(Tool_preferences.user_name == username)
-        .all()
+
+    if request.method == "POST":
+        for downtime in request.form.keys():
+            tool_pref = session.query(Tool_preferences).get(downtime.split("__")[1])
+            print(downtime.split("__")[1])
+            print(request.form[downtime])
+            tool_pref.interval = request.form[downtime]
+        session.commit()
+
+    tool_prefs = (
+        session.query(Tool_preferences).filter(Tool_preferences.user_name == flask_session["user"]["username"]).all()
     )
-    return render_template("profile.html", tools=tools, username=username)
+    return render_template("profile.html", tool_prefs=tool_prefs)
 
 
 if __name__ == "__main__":

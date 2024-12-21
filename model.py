@@ -29,26 +29,29 @@ class Tool(Base):
     page_num = Column(Integer)
     total_pages = Column(Integer)
     records = relationship("Record", back_populates="tool")
+    tool_preferences = relationship("Tool_preferences", back_populates="tool")
 
 
 class Record(Base):
     __tablename__ = "records"
     id = Column(Integer, primary_key=True)
     tool_id = mapped_column(ForeignKey("tools.id"))
-    tool = relationship("Tool", back_populates="records")
     timestamp = Column(TIMESTAMP, default=datetime.datetime.now)
     health_status = Column(Boolean, default=False)
+    tool = relationship("Tool", back_populates="records")
 
 
 class User(Base):
     __tablename__ = "users"
-    username = Column(String(100), primary_key=True)
+    username = Column(String(500), primary_key=True)
+    tool_preferences = relationship("Tool_preferences", back_populates="user")
 
 
 class Tool_preferences(Base):
     __tablename__ = "tool_preferences"
     id = Column(Integer, primary_key=True)
-    user_name = Column(ForeignKey("users.username"))
-    tool_id = Column(ForeignKey("tools.id"))
+    user = relationship("User", back_populates="tool_preferences")
+    tool = relationship("Tool", back_populates="tool_preferences")
+    tool_id = mapped_column(ForeignKey("tools.id"))
+    user_name = mapped_column(ForeignKey("users.username"))
     interval = Column(Integer, default=0)
-

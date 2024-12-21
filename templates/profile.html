@@ -1,11 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toolwatch</title>
-</head>
-<body>
-    Under construction
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block profile_color %}
+    link-info
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-body">
+            <h1 class="text-center">User Preferences</h1>
+            <div class="mt-4">
+                {% if tool_prefs %}
+                    <h2>Downtime Notification Settings</h2>
+                <form method="post">
+                    <div class="list-group">
+                        {% for tool_pref in tool_prefs %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">{{ tool_pref.tool.name }}</span>
+                                <div class="input-group input-group-sm" style="max-width: 200px">
+                                    <span class="input-group-text">Downtime (mins)</span>
+                                <input type="number" class="form-control" min="0" value={{ tool_pref.interval }} name="downtime__{{ tool_pref.id }}"/>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <p class="m-2">*Setting downtime to 0 disables notifications</p>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+                </form>
+                {% else %}
+                    <h3 class="text-center">No tool found!</h3>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
