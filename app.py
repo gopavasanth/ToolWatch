@@ -180,7 +180,10 @@ def profile():
                 tool_pref.send_email = (request.form[item] == "true")
         session.commit()
 
-    user = session.query(User).filter(User.username==flask_session["user"]["username"]).one()
+    user = session.query(User).filter(User.username==flask_session["user"]["username"]).first()
+    if not user:
+        return render_template("profile.html",tool_prefs=None)
+
     tool_prefs = user.tool_preferences 
     return render_template("profile.html", tool_prefs=tool_prefs)
 
