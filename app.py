@@ -47,6 +47,7 @@ def logout():
 
 @app.route("/api/auth/mediawiki/callback")
 def authorize():
+    # Obtain the username from Oauth
     oauth.toolwatch.authorize_access_token()
     profile_resp = oauth.toolwatch.get("oauth2/resource/profile")
     profile_resp.raise_for_status()
@@ -177,14 +178,14 @@ def profile():
                 tool_pref.interval = request.form[item]
             if "markfixed" in item:
                 tool_pref = session.query(Tool_preferences).get(item.split("__")[1])
-                tool_pref.send_email = (request.form[item] == "true")
+                tool_pref.send_email = request.form[item] == "true"
         session.commit()
 
-    user = session.query(User).filter(User.username==flask_session["user"]["username"]).first()
+    user = session.query(User).filter(User.username == flask_session["user"]["username"]).first()
     if not user:
-        return render_template("profile.html",tool_prefs=None)
+        return render_template("profile.html", tool_prefs=None)
 
-    tool_prefs = user.tool_preferences 
+    tool_prefs = user.tool_preferences
     return render_template("profile.html", tool_prefs=tool_prefs)
 
 
