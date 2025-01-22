@@ -9,7 +9,7 @@ from flask import Flask, render_template, request, redirect, session as flask_se
 from sqlalchemy import extract
 
 from config import config
-from model import Base, Record, Session, Tool, engine, Tool_preferences, User
+from model import Base, Record, Session, Tool, engine, ToolPreferences, Maintainer
 from utils import fetch_and_store_data
 
 app = Flask(__name__)
@@ -174,14 +174,14 @@ def profile():
     if request.method == "POST":
         for item in request.form.keys():
             if "downtime" in item:
-                tool_pref = session.query(Tool_preferences).get(item.split("__")[1])
+                tool_pref = session.query(ToolPreferences).get(item.split("__")[1])
                 tool_pref.interval = request.form[item]
             if "markfixed" in item:
-                tool_pref = session.query(Tool_preferences).get(item.split("__")[1])
+                tool_pref = session.query(ToolPreferences).get(item.split("__")[1])
                 tool_pref.send_email = request.form[item] == "true"
         session.commit()
 
-    user = session.query(User).filter(User.username == flask_session["user"]["username"]).first()
+    user = session.query(Maintainer).filter(Maintainer.username == flask_session["user"]["username"]).first()
     if not user:
         return render_template("profile.html", tool_prefs=None)
 

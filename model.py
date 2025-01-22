@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, Boolean, TIMESTAMP, Text, String
+from sqlalchemy import create_engine, Column, Integer, Boolean, TIMESTAMP, Text, String, Table
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, mapped_column
 from sqlalchemy import ForeignKey
 
@@ -8,6 +8,14 @@ from config import config
 engine = create_engine(config["MARIADB_URI"])
 Session = sessionmaker(bind=engine)
 Base = declarative_base()  # Use declarative_base from sqlalchemy.orm
+
+# Association table for the M2M relationship between Tool and Maintainer
+tool_maintainers = Table(
+    "tool_maintainers",
+    Base.metadata,
+    Column("tool_id", Integer, ForeignKey("tools.id"), primary_key=True),
+    Column("maintainer_id", Integer, ForeignKey("maintainers.id"), primary_key=True),
+)
 
 
 class Tool(Base):
@@ -28,8 +36,9 @@ class Tool(Base):
     last_checked = Column(TIMESTAMP, default=datetime.datetime.now)
     page_num = Column(Integer)
     total_pages = Column(Integer)
+    maintainers = relationship("Maintainer", secondary=tool_maintainers, back_populates="tools")
     records = relationship("Record", back_populates="tool")
-    tool_preferences = relationship("Tool_preferences", back_populates="tool")
+    tool_preferences = relationship("ToolPreferences", back_populates="tool")
 
 
 class Record(Base):
@@ -41,19 +50,20 @@ class Record(Base):
     tool = relationship("Tool", back_populates="records")
 
 
-class User(Base):
-    __tablename__ = "users"
+class Maintainer(Base):
+    __tablename__ = "maintainers"
     id = Column(Integer, primary_key=True)
     username = Column(String(500), unique=True, nullable=False)
-    tool_preferences = relationship("Tool_preferences", back_populates="user")
+    tools = relationship("Tool", secondary=tool_maintainers, back_populates="maintainers")
+    tool_preferences = relationship("ToolPreferences", back_populates="")
 
 
-class Tool_preferences(Base):
+class ToolPreferences(Base):
     __tablename__ = "tool_preferences"
     id = Column(Integer, primary_key=True)
     interval = Column(Integer, default=0)
     send_email = Column(Boolean, default=True)
-    user = relationship("User", back_populates="tool_preferences")
+    user = relationship("Maintainer", back_populates="tool_preferences")
     tool = relationship("Tool", back_populates="tool_preferences")
     tool_id = mapped_column(ForeignKey("tools.id"))
-    user_id = mapped_column(ForeignKey("users.id"))
+    user_id = mapped_column(ForeignKey("maintainers.id"))

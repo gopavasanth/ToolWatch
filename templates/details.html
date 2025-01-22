@@ -5,34 +5,42 @@
     <div>
       <div class="row mt-4">
         <p>
-          <b>Tool Name:</b>{{ tool.name }}
+          <b>Tool Name: </b>{{ tool.name }}
         </p>
       </div>
 
       <div class="row">
         <p>
-          <b>Url:</b><a href="{{ tool.url }}">{{ tool.url }}</a>
+          <b>Url: </b><a href="{{ tool.url }}">{{ tool.url }}</a>
         </p>
       </div>
       <div class="row">
         <p>
-          <b>Tool Description:</b>{{ tool.description }}
+          <b>Tool Description: </b>{{ tool.description }}
         </p>
       </div>
 
       <div class="row">
         <p>
-          <b>Author:</b>{{ tool.author }}
+          <b>Author: </b>{{ tool.author }}
         </p>
       </div>
       <div class="row">
         <p>
-          <b>License:</b>{{ tool.license }}
+          <b>Maintainers:</b>
+          {% for maintainer in tool.maintainers %}
+          {{ maintainer.username }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
         </p>
       </div>
       <div class="row">
         <p>
-          <b>Repository:</b><a href="{{ tool.repository }}">{{ tool.repository }}</a>
+          <b>License: </b>{{ tool.license }}
+        </p>
+      </div>
+      <div class="row">
+        <p>
+          <b>Repository: </b><a href="{{ tool.repository }}">{{ tool.repository }}</a>
         </p>
       </div>
     </div>

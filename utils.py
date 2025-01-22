@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import requests
 from datetime import datetime
 import time
-from model import Session, Tool, Record, Tool_preferences, User
+from model import Session, Tool, Record, ToolPreferences, Maintainer
 from config import config
 from sqlalchemy import create_engine, desc, and_
 from sqlalchemy.orm import sessionmaker
@@ -32,6 +32,7 @@ except FileNotFoundError:
     # Ensure that you have an SSH tunnel to the LDAP server:
     # ssh -N <login>@dev.toolforge.org -L 3389:ldap-ro.eqiad.wikimedia.org:389
     ldap_server = "ldap://localhost:3389"
+
 base_dn = "ou=servicegroups,dc=wikimedia,dc=org"
 attributes = ["member"]
 server = Server(ldap_server, use_ssl=True)
@@ -95,18 +96,20 @@ def fetch_and_store_data():
 
             maintainers = get_maintainers(tool_data)
             for maintainer in maintainers:
-                user = session.query(User).filter(User.username == maintainer).first()
+                user = session.query(Maintainer).filter(Maintainer.username == maintainer).first()
                 if not user:
-                    user = User(username=maintainer)
+                    user = Maintainer(username=maintainer)
                     session.add(user)
+                if user not in tool.maintainers:
+                    tool.maintainers.append(user)
 
                 tool_preferences = (
-                    session.query(Tool_preferences)
-                    .filter(Tool_preferences.user == user, Tool_preferences.tool == tool)
+                    session.query(ToolPreferences)
+                    .filter(ToolPreferences.user == user, ToolPreferences.tool == tool)
                     .first()
                 )
                 if not tool_preferences:
-                    tool_preferences = Tool_preferences(user=user, tool=tool)
+                    tool_preferences = ToolPreferences(user=user, tool=tool)
                     session.add(tool_preferences)
             print(f"Finished inserting tool: {start + tool_no}/{len(data)}")
 
@@ -151,7 +154,7 @@ def ping_every_30_minutes():
         session.commit()
 
         if tool.health_status is False:
-            tool_pref = session.query(Tool_preferences).filter(Tool_preferences.tool_id == tool.id).first()
+            tool_pref = session.query(ToolPreferences).filter(ToolPreferences.tool_id == tool.id).first()
             last_up = (
                 session.query(Record)
                 .filter(and_(Record.tool_id == tool.id, Record.health_status == True))
