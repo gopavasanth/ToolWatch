@@ -185,7 +185,13 @@ def profile():
     if not user:
         return render_template("profile.html", tool_prefs=None)
 
-    tool_prefs = user.tool_preferences
+    tool_prefs = (
+        session.query(ToolPreferences)
+        .join(Tool)
+        .filter(Tool.web_tool == True)
+        .filter(ToolPreferences.user == user)
+        .all()
+    )
     return render_template("profile.html", tool_prefs=tool_prefs)
 
 

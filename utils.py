@@ -21,23 +21,6 @@ smtp_port = 587
 smtp_user = "tool-watch.alerts@toolforge.org"
 smtp_password = ""
 
-# LDAP setup
-try:
-    with open("/etc/ldap.conf") as file:
-        for line in file.readlines():
-            if "uri" in line:
-                ldap_server = line.split()[1]
-except FileNotFoundError:
-    print("/etc/ldap.conf not found, assuming local development environment")
-    # Ensure that you have an SSH tunnel to the LDAP server:
-    # ssh -N <login>@dev.toolforge.org -L 3389:ldap-ro.eqiad.wikimedia.org:389
-    ldap_server = "ldap://localhost:3389"
-
-base_dn = "ou=people,dc=wikimedia,dc=org"
-attributes = ["uid", "wikimediaGlobalAccountName"]
-server = Server(ldap_server, use_ssl=True)
-connection = Connection(server, client_strategy=RESTARTABLE, auto_bind=True)
-
 
 def get_maintainers(tool_data):
     tool_name = tool_data["name"]
@@ -60,6 +43,22 @@ def get_maintainers(tool_data):
 
 
 def fetch_and_store_data():
+    # LDAP setup
+    try:
+        with open("/etc/ldap.conf") as file:
+            for line in file.readlines():
+                if "uri" in line:
+                    ldap_server = line.split()[1]
+    except FileNotFoundError:
+        print("/etc/ldap.conf not found, assuming local development environment")
+        # Ensure that you have an SSH tunnel to the LDAP server:
+        # ssh -N <login>@dev.toolforge.org -L 3389:ldap-ro.eqiad.wikimedia.org:389
+        ldap_server = "ldap://localhost:3389"
+    base_dn = "ou=people,dc=wikimedia,dc=org"
+    attributes = ["uid", "wikimediaGlobalAccountName"]
+    server = Server(ldap_server, use_ssl=True)
+    connection = Connection(server, client_strategy=RESTARTABLE, auto_bind=True)
+
     API_URL = config["API_URL"]
     response = requests.get(API_URL)
     data = response.json()
@@ -166,8 +165,9 @@ def ping_every_30_minutes():
             )
 
             if last_up is not None and tool_pref.send_email and tool_pref.interval != 0:
-                # Since the cron job runs every 30 minutes, first time it went down will be 30 minutes + last time it was up.
-                if tool_pref.interval * 60 <= ((datetime.now() - last_up.timestamp).total_seconds() + 1800):
+                # Since the cron job runs every 24 hours, the tool's downtime will be detected in the next crawl after it was last seen up
+                # Hence the effective downtime is (now−last_up) − 24h/86,400s
+                if ((datetime.now() - last_up.timestamp).total_seconds() - 86400) >= tool_pref.interval * 86400:
                     try:
                         name = tool_pref.tool.name
                         if "toolforge." in name:
