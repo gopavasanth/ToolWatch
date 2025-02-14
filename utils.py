@@ -1,5 +1,5 @@
 import smtplib
-from ldap3 import Server, Connection
+from ldap3 import Server, Connection, RESTARTABLE
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -36,7 +36,7 @@ except FileNotFoundError:
 base_dn = "ou=people,dc=wikimedia,dc=org"
 attributes = ["uid", "wikimediaGlobalAccountName"]
 server = Server(ldap_server, use_ssl=True)
-connection = Connection(server, auto_bind=True)
+connection = Connection(server, client_strategy=RESTARTABLE, auto_bind=True)
 
 
 def get_maintainers(tool_data):
@@ -155,6 +155,9 @@ def ping_every_30_minutes():
 
         if tool.health_status is False:
             tool_pref = session.query(ToolPreferences).filter(ToolPreferences.tool_id == tool.id).first()
+            if not tool_pref:  # lack of ToolPreference implies that the tool has no maintainer
+                continue
+
             last_up = (
                 session.query(Record)
                 .filter(and_(Record.tool_id == tool.id, Record.health_status == True))
@@ -185,9 +188,7 @@ def send_email(tool_name):
     msg["From"] = smtp_user
     msg["To"] = to_email
     msg["Subject"] = f"Your Wikimedia Tool: {tool_name} is down!"
-    body = (
-        f"Your tool: {tool_name} went down at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\nYou are receiving this message because you have opted in to receive email notifications when your tool goes down on https://tool-watch.toolforge.org/",
-    )
+    body = f"Your tool: {tool_name} went down at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\nYou are receiving this message because you have opted in to receive email notifications when your tool goes down on https://tool-watch.toolforge.org/"
 
     msg.attach(MIMEText(body, "plain"))
 
