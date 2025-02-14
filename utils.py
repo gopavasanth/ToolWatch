@@ -33,8 +33,8 @@ except FileNotFoundError:
     # ssh -N <login>@dev.toolforge.org -L 3389:ldap-ro.eqiad.wikimedia.org:389
     ldap_server = "ldap://localhost:3389"
 
-base_dn = "ou=servicegroups,dc=wikimedia,dc=org"
-attributes = ["member"]
+base_dn = "ou=people,dc=wikimedia,dc=org"
+attributes = ["uid", "wikimediaGlobalAccountName"]
 server = Server(ldap_server, use_ssl=True)
 connection = Connection(server, auto_bind=True)
 
@@ -46,15 +46,15 @@ def get_maintainers(tool_data):
     tool_name = tool_name.removeprefix("tools.")
     tool_name = tool_name.removesuffix("-")
 
-    # Each tool belongs to an LDAP group in which the maintainers are the group members
-    search_filter = f"(cn=tools.{tool_name})"
+    # Each maintainer is a member of the group that the tool belongs to
+    search_filter = f"(memberOf=cn=tools.{tool_name},ou=servicegroups,dc=wikimedia,dc=org)"
     connection.search(base_dn, search_filter, attributes=attributes)
 
-    # Extract the UIDs (usernames) from the member attribute
     uids = []
     if connection.entries:
-        for member_dn in connection.entries[0].member:
-            uid = member_dn.split(",")[0].split("=")[1]
+        for entry in connection.entries:
+            # Check if user has an SUL username, else use the uid
+            uid = entry.wikimediaGlobalAccountName.value or entry.uid.value
             uids.append(uid)
     return uids
 
