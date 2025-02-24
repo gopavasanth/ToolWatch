@@ -1,137 +1,97 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <title>ToolWatch</title>
-    <link
-      rel="stylesheet"
-      href="{{ url_for('static', filename='style.css') }}"
-    />
-    <!-- Add Bootstrap CSS link -->
-    <link
-      rel="stylesheet"
-      href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/bootstrap/5.3.1/css/bootstrap.min.css"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% extends 'base.html' %}
+
+{% block content %}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       const health_statuses = {{health_statuses | safe}}
       const days = {{days | safe}}
       const selected_year = {{selected_year}}
       const selected_month = {{selected_month}}
     </script>
-  </head>
-  <body>
-    <nav
-      class="flex navbar navbar-expand-lg navbar-dark bg-dark"
-      style="width: 100%"
-    >
-      <div
-        class="container"
-        style="font-family: &quot;Courier New&quot;, Courier, monospace"
-      >
-        <a class="navbar-brand" href="/">
-          <div class="tool-title">ToolWatch</div></a
-        >
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-toggle="collapse"
-          data-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item">
-              <div class="nav-link active">
-                <!-- check if last_checked is present in any one of the tool -->
-                Last crawled on {% if tool and tool.last_checked %}
-                <span>{{tool.last_checked}}</span>
-                {% else %}
-                <span>-</span>
-                {% endif %}
-              </div>
-            </li>
-            <!-- Add more navigation items as needed -->
-          </ul>
-        </div>
-      </div>
-    </nav>
 
-    <div class="container">
-      <div>
-        <div class="row mt-4">
-          <p><b>Tool Name: </b>{{tool.name}}</p>
-        </div>
-
-        <div class="row">
-          <p><b>Url: </b><a href="{{tool.url}}">{{tool.url}}</a></p>
-        </div>
-        <div class="row">
-          <p><b>Tool Description: </b>{{tool.description}}</p>
-        </div>
-
-        <div class="row">
-          <p><b>Author: </b>{{tool.author}}</p>
-        </div>
-        <div class="row">
-          <p><b>License: </b>{{tool.license}}</p>
-        </div>
-        <div class="row">
-          <p>
-            <b>Repository: </b
-            ><a href="{{tool.repository}}">{{tool.repository}}</a>
-          </p>
-        </div>
+  <div class="container">
+    <div>
+      <div class="row mt-4">
+        <p>
+          <b>Tool Name: </b>{{ tool.name }}
+        </p>
       </div>
 
-      <div class="card">
-        <form method="post" id="form">
-          <div class="row mt-3 px-3">
-            <div class="d-flex col">
-              <h3 class="fw-medium align-self-center ms-4">
-                Availability Graph
-              </h3>
-            </div>
-            <div class="col-2 p-1">
-              <div class="form-floating">
-                <select id="month" name="month" class="form-select">
-                  <option value="1">Jan</option>
-                  <option value="2">Feb</option>
-                  <option value="3">Mar</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6">June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
-                <label for="month">Select Month</label>
-              </div>
-            </div>
-            <div class="col-2 p-1 pe-3">
-              <div class="form-floating">
-                <select name="year" id="year" class="form-select"></select>
-                <label for="year">Select Year</label>
-              </div>
-            </div>
-          </div>
-          <div>
-            <div style="height: 30rem; width: 50 rem">
-              <canvas class="p-3" id="availability_graph"></canvas>
-            </div>
-          </div>
-        </form>
+      <div class="row">
+        <p>
+          <b>Url: </b><a href="{{ tool.url }}">{{ tool.url }}</a>
+        </p>
+      </div>
+      <div class="row">
+        <p>
+          <b>Tool Description: </b>{{ tool.description }}
+        </p>
+      </div>
+
+      <div class="row">
+        <p>
+          <b>Author: </b>{{ tool.author }}
+        </p>
+      </div>
+      <div class="row">
+        <p>
+          <b>Maintainers:</b>
+          {% for maintainer in tool.maintainers %}
+          {{ maintainer.username }}{% if not loop.last %}, {% endif %}
+          {% endfor %}
+        </p>
+      </div>
+      <div class="row">
+        <p>
+          <b>License: </b>{{ tool.license }}
+        </p>
+      </div>
+      <div class="row">
+        <p>
+          <b>Repository: </b><a href="{{ tool.repository }}">{{ tool.repository }}</a>
+        </p>
       </div>
     </div>
-    <script
-      type="text/javascript"
-      src="{{ url_for('static', filename='graph.js') }}"
-    ></script>
-  </body>
-</html>
+
+    <div class="card">
+      <form method="post" id="form">
+        <div class="row mt-3 px-3">
+          <div class="d-flex col">
+            <h3 class="fw-medium align-self-center ms-4">Availability Graph</h3>
+          </div>
+          <div class="col-2 p-1">
+            <div class="form-floating">
+              <select id="month" name="month" class="form-select">
+                <option value="1">Jan</option>
+                <option value="2">Feb</option>
+                <option value="3">Mar</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              <label for="month">Select Month</label>
+            </div>
+          </div>
+          <div class="col-2 p-1 pe-3">
+            <div class="form-floating">
+              <select name="year" id="year" class="form-select"></select>
+              <label for="year">Select Year</label>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="height: 30rem; width: 50 rem">
+            <canvas class="p-3" id="availability_graph"></canvas>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script type="text/javascript" src="{{ url_for('static', filename='graph.js') }}"></script>
+{% endblock %}

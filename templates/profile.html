@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block profile_color %}link-info{% endblock %}
+{% block content %}
+    <div class="container mt-5">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="text-center">User Preferences</h1>
+                <div class="mt-4">
+                    {% if tool_prefs %}
+                        <h2>Downtime Notification Settings</h2>
+                        <form method="post" id="form">
+                            <div class="list-group">
+                                {% for tool_pref in tool_prefs %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold">{{ tool_pref.tool.name }}</span>
+                                        <div class="d-flex align-items-center">
+                                            <div class="input-group" style="max-width: 150px">
+                                                <span class="input-group-text ">Mark Fixed</span>
+                                                <div class="input-group-text">
+                                                    <input id="markfixed_hidden"
+                                                           type="hidden"
+                                                           name="markfixed__{{ tool_pref.id }}"
+                                                           value="false" />
+                                                    <input id="markfixed"
+                                                           class="form-check-input mt-0"
+                                                           type="checkbox"
+                                                           name="markfixed__{{ tool_pref.id }}"
+                                                           value="true"
+                                                           {% if tool_pref.tool.health_status != false %}disabled{% endif %}
+                                                           {% if tool_pref.send_email %}checked{% endif %} />
+                                                </div>
+                                            </div>
+                                            <div class="input-group ms-2" style="max-width: 250px">
+                                                <span class="input-group-text">Downtime (days)</span>
+                                                <input type="number" class="form-control" min="0" value={{ tool_pref.interval }} name="downtime__{{ tool_pref.id }}" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                <h4 class="m-2">Notes</h4>
+                                <ol>
+                                    <li>
+                                        Downtime is the amount of time tool should be down before the system sends a notification.
+                                        <ul>
+                                            <li>Downtime of 0 disables notifications.</li>
+                                        </ul>
+                                    </li>
+                                    <li>
+                                        Marking as "fixed" forces failure notifications on the next check. By default, notifications are sent only once after the tool goes down.
+                                        <ul>
+                                            <li>Only applicable if the tool is currently down.</li>
+                                        </ul>
+                                    </li>
+                                    <li>The status checks occur every 24h, so downtime is measured in days.</li>
+                                </ol>
+                                <div class="text-center mt-4">
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </div>
+                        </form>
+                    {% else %}
+                        <h3 class="text-center">No tools found!</h3>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById("form").addEventListener('submit', () => {
+                if(document.getElementById("markfixed").checked) {
+                    document.getElementById("markfixed_hidden").disabled = true;
+                }
+            }
+        )
+    </script>
+{% endblock %}
