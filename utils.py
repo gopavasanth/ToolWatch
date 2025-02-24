@@ -19,8 +19,22 @@ page_limit = config["page_limit"]
 smtp_host = "mail.tools.wmcloud.org"
 smtp_port = 587
 smtp_user = "tool-watch.alerts@toolforge.org"
-smtp_password = ""
 
+# LDAP setup
+try:
+    with open("/etc/ldap.conf") as file:
+        for line in file.readlines():
+            if "uri" in line:
+                ldap_server = line.split()[1]
+except FileNotFoundError:
+    print("/etc/ldap.conf not found, assuming local development environment")
+    # Ensure that you have an SSH tunnel to the LDAP server:
+    # ssh -N <login>@dev.toolforge.org -L 3389:ldap-ro.eqiad.wikimedia.org:389
+    ldap_server = "ldap://localhost:3389"
+base_dn = "ou=people,dc=wikimedia,dc=org"
+attributes = ["uid", "wikimediaGlobalAccountName"]
+server = Server(ldap_server, use_ssl=True)
+connection = Connection(server, client_strategy=RESTARTABLE, auto_bind=True)
 
 def get_maintainers(tool_data):
     tool_name = tool_data["name"]
@@ -43,21 +57,6 @@ def get_maintainers(tool_data):
 
 
 def fetch_and_store_data():
-    # LDAP setup
-    try:
-        with open("/etc/ldap.conf") as file:
-            for line in file.readlines():
-                if "uri" in line:
-                    ldap_server = line.split()[1]
-    except FileNotFoundError:
-        print("/etc/ldap.conf not found, assuming local development environment")
-        # Ensure that you have an SSH tunnel to the LDAP server:
-        # ssh -N <login>@dev.toolforge.org -L 3389:ldap-ro.eqiad.wikimedia.org:389
-        ldap_server = "ldap://localhost:3389"
-    base_dn = "ou=people,dc=wikimedia,dc=org"
-    attributes = ["uid", "wikimediaGlobalAccountName"]
-    server = Server(ldap_server, use_ssl=True)
-    connection = Connection(server, client_strategy=RESTARTABLE, auto_bind=True)
 
     API_URL = config["API_URL"]
     response = requests.get(API_URL)
@@ -195,7 +194,6 @@ def send_email(tool_name):
     try:
         with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.starttls()  # Upgrade to secure connection
-            server.login(smtp_user, smtp_password)  # Login to the server
             server.sendmail(smtp_user, to_email, msg.as_string())  # Send the email
             print(f"Email sent to {to_email}")
     except Exception as e:

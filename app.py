@@ -33,6 +33,11 @@ oauth.register(
 tool = oauth.create_client("toolwatch")
 
 
+@app.teardown_appcontext
+def remove_session(exception=None):
+    Session.remove()  # Ensures the session is closed at the end of each request
+
+
 @app.route("/login")
 def login():
     toolwatch = oauth.create_client("toolwatch")

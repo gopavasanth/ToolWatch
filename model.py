@@ -1,12 +1,12 @@
 from sqlalchemy import create_engine, Column, Integer, Boolean, TIMESTAMP, Text, String, Table
-from sqlalchemy.orm import sessionmaker, declarative_base, relationship, mapped_column
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship, mapped_column, scoped_session
 from sqlalchemy import ForeignKey
 
 import datetime
 from config import config
 
 engine = create_engine(config["MARIADB_URI"])
-Session = sessionmaker(bind=engine)
+Session = scoped_session(sessionmaker(bind=engine))  # Scoped session per request
 Base = declarative_base()  # Use declarative_base from sqlalchemy.orm
 
 # Association table for the M2M relationship between Tool and Maintainer
