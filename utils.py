@@ -20,23 +20,28 @@ smtp_host = "mail.tools.wmcloud.org"
 smtp_port = 587
 smtp_user = "tool-watch.alerts@toolforge.org"
 
-# LDAP setup
-try:
-    with open("/etc/ldap.conf") as file:
-        for line in file.readlines():
-            if "uri" in line:
-                ldap_server = line.split()[1]
-except FileNotFoundError:
-    print("/etc/ldap.conf not found, assuming local development environment")
-    # Ensure that you have an SSH tunnel to the LDAP server:
-    # ssh -N <login>@dev.toolforge.org -L 3389:ldap-ro.eqiad.wikimedia.org:389
-    ldap_server = "ldap://localhost:3389"
-base_dn = "ou=people,dc=wikimedia,dc=org"
-attributes = ["uid", "wikimediaGlobalAccountName"]
-server = Server(ldap_server, use_ssl=True)
-connection = Connection(server, client_strategy=RESTARTABLE, auto_bind=True)
 
-def get_maintainers(tool_data):
+def setup_ldap():
+    try:
+        with open("/etc/ldap.conf") as file:
+            for line in file.readlines():
+                if "uri" in line:
+                    ldap_server = line.split()[1]
+    except FileNotFoundError:
+        print("/etc/ldap.conf not found, assuming local development environment")
+        # Ensure that you have an SSH tunnel to the LDAP server:
+        # ssh -N <login>@dev.toolforge.org -L 3389:ldap-ro.eqiad.wikimedia.org:389
+        ldap_server = "ldap://localhost:3389"
+
+    server = Server(ldap_server, use_ssl=True)
+    connection = Connection(server, client_strategy=RESTARTABLE, auto_bind=True)
+    return connection
+
+
+def get_maintainers(tool_data, ldap_connection):
+    base_dn = "ou=people,dc=wikimedia,dc=org"
+    attributes = ["uid", "wikimediaGlobalAccountName"]
+
     tool_name = tool_data["name"]
     tool_name = tool_name.removeprefix("toolforge.")
     tool_name = tool_name.removeprefix("toolforge-")
@@ -45,22 +50,22 @@ def get_maintainers(tool_data):
 
     # Each maintainer is a member of the group that the tool belongs to
     search_filter = f"(memberOf=cn=tools.{tool_name},ou=servicegroups,dc=wikimedia,dc=org)"
-    connection.search(base_dn, search_filter, attributes=attributes)
+    ldap_connection.search(base_dn, search_filter, attributes=attributes)
 
     uids = []
-    if connection.entries:
-        for entry in connection.entries:
-            # Check if user has an SUL username, else use the uid
+    if ldap_connection.entries:
+        for entry in ldap_connection.entries:
+            # Prefer the SUL username if present since OAuth returns SUL
             uid = entry.wikimediaGlobalAccountName.value or entry.uid.value
             uids.append(uid)
     return uids
 
 
 def fetch_and_store_data():
-
     API_URL = config["API_URL"]
     response = requests.get(API_URL)
     data = response.json()
+    ldap_conn = setup_ldap()
 
     session = Session()
     total_pages = len(data) // page_limit
@@ -92,7 +97,7 @@ def fetch_and_store_data():
                 )
                 session.add(tool)
 
-            maintainers = get_maintainers(tool_data)
+            maintainers = get_maintainers(tool_data, ldap_conn)
             for maintainer in maintainers:
                 user = session.query(Maintainer).filter(Maintainer.username == maintainer).first()
                 if not user:
