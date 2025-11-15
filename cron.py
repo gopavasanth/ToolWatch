@@ -1,6 +1,7 @@
 import requests
 import datetime
 import time
+import asyncio
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from model import Tool,Base,engine,Session
@@ -15,4 +16,4 @@ if __name__ == '__main__':
     session = Session()
     print("Fetching and storing data...")
     fetch_and_store_data()
-    ping_every_30_minutes()
+    asyncio.run(ping_every_30_minutes())
