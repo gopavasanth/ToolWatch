@@ -65,8 +65,6 @@ def fetch_and_store_data():
     API_URL = config["API_URL"]
     headers = {'User-Agent':'toolwatch/1.0 requests/flask'}
     response = requests.get(API_URL, headers=headers)
-    print(response.status_code)
-    print(response.text)
     data = response.json()
     ldap_conn = setup_ldap()
 
