@@ -5,7 +5,8 @@ from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 import requests
 from datetime import datetime
-import time
+import aiohttp
+import asyncio
 from model import Session, Tool, Record, ToolPreferences, Maintainer
 from config import config
 from sqlalchemy import create_engine, desc, and_
@@ -120,71 +121,90 @@ def fetch_and_store_data():
         session.commit()
     session.close()
 
+async def limited_get(session, url, sem):
+    async with sem:
+        return await sync_get(session, url)
 
-def sync_get(url):
+async def sync_get(session, url):
     try:
         print(f"[*] Fetching url {url}")
-        response = requests.head(url, timeout=5)
-        if response.status_code >= 200 and response.status_code < 399:
-            return True
-        else:
-            return False
-    except requests.RequestException:
+        async with session.head(url) as response:
+            if response.status >= 200 and response.status < 399:
+                print(f"[*] {url} is True")
+                return True
+            else:
+                print(f"[*] {url} is False")
+                return False
+    except aiohttp.ClientError:
+        print(f"[*] {url} is False")
+        return False
+    
+    except asyncio.TimeoutError:
+        print(f"[*] {url} is False")
         return False
 
 
-def ping_every_30_minutes():
+async def ping_every_30_minutes():
     engine = create_engine(config["MARIADB_URI"])
     SessionInit = sessionmaker(bind=engine)
     session = SessionInit()
     # Fetch all tools from the database, excluding the ones that are not web tools
     tools = session.query(Tool).filter(Tool.web_tool == True).all()
     print("Checking health status of tools")
-    for tool in tools:
-        url = tool.url
-        time.sleep(0.01)
-        url_parsed = urlparse(url)
-        print(f"[*] Checking health of {url} with hostname {url_parsed.hostname}")
-        if url_parsed.hostname is not None and "toolforge.org" in url_parsed.hostname:
-            result = sync_get(url)
-        else:
-            result = False  # Don't check the health of non-toolforge.org urls
-        print(f"[*] {url} is {result}")
-        tool.health_status = result
-        tool.last_checked = datetime.now()
-        record = Record(tool=tool, health_status=result)
-        session.add(tool)
-        session.add(record)
-        session.commit()
+    sem = asyncio.Semaphore(50)
+    timeout = aiohttp.ClientTimeout(total=10)
+    connector = aiohttp.TCPConnector(limit=50, ttl_dns_cache=300)
 
-        if tool.health_status is False:
-            tool_pref = session.query(ToolPreferences).filter(ToolPreferences.tool_id == tool.id).first()
-            if not tool_pref:  # lack of ToolPreference implies that the tool has no maintainer
-                continue
+    tasks = []
+    async with aiohttp.ClientSession(timeout=timeout, connector=connector) as asyncsession:
+        for tool in tools:
+            url = tool.url
+            url_parsed = urlparse(url)
+            print(f"[*] Checking health of {url} with hostname {url_parsed.hostname}")
+            if url_parsed.hostname is not None and "toolforge.org" in url_parsed.hostname:
+                task = asyncio.create_task(limited_get(asyncsession, url,sem))
+                tasks.append((tool,task))
+            else:
+                result = False  # Don't check the health of non-toolforge.org urls
+            
 
-            last_up = (
-                session.query(Record)
-                .filter(and_(Record.tool_id == tool.id, Record.health_status == True))
-                .order_by(desc(Record.timestamp))
-                .first()
-            )
+        for tool,task in tasks:
+            result = await task
+            tool.health_status = result
+            tool.last_checked = datetime.now()
+            record = Record(tool=tool, health_status=result)
+            session.add(tool)
+            session.add(record)
+            session.commit()
 
-            if last_up is not None and tool_pref.send_email and tool_pref.interval != 0:
-                # Since the cron job runs every 24 hours, the tool's downtime will be detected in the next crawl after it was last seen up
-                # Hence the effective downtime is (now−last_up) − 24h/86,400s
-                if ((datetime.now() - last_up.timestamp).total_seconds() - 86400) >= tool_pref.interval * 86400:
-                    try:
-                        name = tool_pref.tool.name
-                        if "toolforge." in name:
-                            name = name.split("toolforge.")[-1]
-                        elif "toolforge-" in name:
-                            name = name.split("toolforge-")[-1]
-                        send_email(name)
-                        tool_pref.send_email = False
-                        session.commit()
+            if tool.health_status is False:
+                tool_pref = session.query(ToolPreferences).filter(ToolPreferences.tool_id == tool.id).first()
+                if not tool_pref:  # lack of ToolPreference implies that the tool has no maintainer
+                    continue
 
-                    except Exception as e:
-                        print("Failed to send mail!", e)
+                last_up = (
+                    session.query(Record)
+                    .filter(and_(Record.tool_id == tool.id, Record.health_status == True))
+                    .order_by(desc(Record.timestamp))
+                    .first()
+                )
+
+                if last_up is not None and tool_pref.send_email and tool_pref.interval != 0:
+                    # Since the cron job runs every 24 hours, the tool's downtime will be detected in the next crawl after it was last seen up
+                    # Hence the effective downtime is (now−last_up) − 24h/86,400s
+                    if ((datetime.now() - last_up.timestamp).total_seconds() - 86400) >= tool_pref.interval * 86400:
+                        try:
+                            name = tool_pref.tool.name
+                            if "toolforge." in name:
+                                name = name.split("toolforge.")[-1]
+                            elif "toolforge-" in name:
+                                name = name.split("toolforge-")[-1]
+                            send_email(name)
+                            tool_pref.send_email = False
+                            session.commit()
+
+                        except Exception as e:
+                            print("Failed to send mail!", e)
 
 
 def send_email(tool_name):
