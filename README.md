@@ -139,7 +139,7 @@ The replica.my.cnf file (present in toolforge vm) should contain:
 
 Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/ToolsDB#Steps_to_create_a_user_database
 
-Check for <user>\_\_toolwatchDB <- this is the production DB name.
+Check for <user>__toolwatchDB <- this is the production DB name.
 
 ### Kubernetes dashboard
 
