@@ -6,6 +6,7 @@ More at: https://phabricator.wikimedia.org/T341379
 ## Toolforge
 
 To update the tool, the following commands need to be run
+
 ```sh
 cd ToolWatch && git pull && ./scripts/toolforge-update.sh
 ```
@@ -27,6 +28,7 @@ cd ToolWatch && git pull && ./scripts/toolforge-update.sh
 1. Before starting the app, you need to start the MariaDB instance on your local device.
 2. You can install the MariaDB from [here](https://mariadb.com/downloads/), or other sources.
 3. After installing the MariaDB, you need to create a database with the following credentials:
+
    - database name: `toolwatch`
    - username: `root`
    - password: `toolwatch`
@@ -41,7 +43,6 @@ cd ToolWatch && git pull && ./scripts/toolforge-update.sh
 2. Run the Flask app: `python app.py`
 3. Open your web browser and visit `http://localhost:5000` to view the tool health status.
 
-
 ## Production
 
 ### Connect to DB Instance
@@ -53,6 +54,7 @@ ssh -L:3307:tools.db.svc.wikimedia.cloud:3306 gopavasanth@login.toolforge.org
 ```
 
 ### Backup
+
 To backup the database, run:
 
 ```sh
@@ -60,13 +62,14 @@ mariadb-dump --defaults-file=$(pwd)/replica.my.cnf --skip-ssl -h 0.0.0.0 -P 3307
 ```
 
 ### Jobs
-* View job logs:
+
+- View job logs:
 
 ```sh
 toolforge jobs logs -f special-restart-crawl
 ```
 
-* List of jobs:
+- List of jobs:
 
 ```sh
 toolforge jobs list
@@ -87,8 +90,8 @@ docker run -ti -u 0 --entrypoint bash tools-harbor.wmcloud.org/tool-tool-watch/t
 ```
 
 ### Grafana Monitoring
-Access the Grafana dashboard https://grafana.wmcloud.org/d/TJuKfnt4z/kubernetes-namespace?orgId=1&var-cluster=prometheus-tools&var-namespace=tool-tool-watch
 
+Access the Grafana dashboard https://grafana.wmcloud.org/d/TJuKfnt4z/kubernetes-namespace?orgId=1&var-cluster=prometheus-tools&var-namespace=tool-tool-watch
 
 ## Directory Structure
 
@@ -111,3 +114,122 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## Maintainers section
+
+### Connecting to prod env
+
+```
+ssh <username>@login.toolforge.org
+become tool-watch
+```
+
+### Connecting to production DB
+
+First connect to prod env using the above command, then run:
+
+```
+mariadb --defaults-file=$HOME/replica.my.cnf -h tools.db.svc.wikimedia.cloud
+```
+
+The replica.my.cnf file (present in toolforge vm) should contain:
+
+1. DB_USER
+2. DB_PASSWORD
+
+Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/ToolsDB#Steps_to_create_a_user_database
+
+Check for <user>__toolwatchDB <- this is the production DB name.
+
+### Kubernetes dashboard
+
+https://k8s-status.toolforge.org/namespaces/tool-tool-watch/
+
+### Deployment/Logs/Debugging
+
+```
+ssh <username>@login.toolforge.org
+become tool-watch
+```
+
+For creating new venv
+
+1. Delete the existing venv folder (inside /ToolWatch)
+
+2. Log into the current kubernetes shell (powered by webservice)
+
+```
+webservice --backend=kubernetes python3.11 shell
+```
+
+3. Inside the shell, create a new venv
+
+```
+$HOME/pyvenv/bin/python3 -m venv venv
+```
+
+For installing new package, run the following command inside the kubernetes shell:
+
+```
+pip install -r requirements.txt
+```
+
+Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/Web/Python#Creating_a_virtual_environment
+
+#### Webservice (Django app) deployment
+
+1. Build the docker image
+
+```
+toolforge build start https://github.com/gopavasanth/ToolWatch
+```
+
+> Note: To be changed with gitlab repo link once migrated.
+
+Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/Building_container_images#Build_and_deploy
+
+2. Re-run the webservice
+
+```
+toolforge webservices restart
+```
+
+Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/Building_container_images#Webservice
+
+In case the previous instance of webservice is not running, run:
+
+```
+toolforge webservices start
+```
+
+To check the status of webservice, run:
+
+```
+toolforge webservices status
+```
+
+#### Job (Crawler job) deployment
+
+First update the kubernetes cluster with the updated code. Job pod is dependent on webservice pod, so make sure webservice pod is up and running.
+
+If job fails, check the logs using
+
+```
+toolforge jobs logs <job name>
+```
+
+Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/Running_jobs#Job_logs
+
+OR
+
+Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/Running_jobs#Showing_information_about_your_job
+
+Check for Hints section in `toolforge jobs show <job name>` to get the reason for failure.
+
+Restart the job (post deploying webservice) using
+
+```
+toolforge jobs restart <job name>
+```
+
+Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/Running_jobs#Restarting_your_jobs
