@@ -43,9 +43,7 @@ cd ToolWatch && git pull && ./scripts/toolforge-update.sh
 2. Run the Flask app: `python app.py`
 3. Open your web browser and visit `http://localhost:5000` to view the tool health status.
 
-## Production
-
-### Connect to DB Instance
+### Using Production Data
 
 To connect to the production DB instance, use the following command:
 
@@ -53,45 +51,8 @@ To connect to the production DB instance, use the following command:
 ssh -L:3307:tools.db.svc.wikimedia.cloud:3306 gopavasanth@login.toolforge.org
 ```
 
-### Backup
+This will setup an SSH tunnel to the production database.
 
-To backup the database, run:
-
-```sh
-mariadb-dump --defaults-file=$(pwd)/replica.my.cnf --skip-ssl -h 0.0.0.0 -P 3307 s55491__toolwatch > backup.sql
-```
-
-### Jobs
-
-- View job logs:
-
-```sh
-toolforge jobs logs -f special-restart-crawl
-```
-
-- List of jobs:
-
-```sh
-toolforge jobs list
-```
-
-### Restart Toolforge web services:
-
-```sh
-toolforge webservices restart
-```
-
-### Debug Production Container Locally
-
-To debug the production container in local, run:
-
-```sh
-docker run -ti -u 0 --entrypoint bash tools-harbor.wmcloud.org/tool-tool-watch/tool-tool-watch:latest
-```
-
-### Grafana Monitoring
-
-Access the Grafana dashboard https://grafana.wmcloud.org/d/TJuKfnt4z/kubernetes-namespace?orgId=1&var-cluster=prometheus-tools&var-namespace=tool-tool-watch
 
 ## Directory Structure
 
@@ -111,11 +72,14 @@ The directory structure of the project is as follows:
 
 Contributions are welcome! If you find any issues or have suggestions for improvement, please open an issue or submit a pull request.
 
-## License
 
-This project is licensed under the [MIT License](LICENSE).
+## Maintainers Section
 
-## Maintainers section
+### Dashboards
+
+Kubernetes: https://k8s-status.toolforge.org/namespaces/tool-tool-watch/<br>
+Grafana: https://grafana.wmcloud.org/d/TJuKfnt4z/kubernetes-namespace?orgId=1&var-cluster=prometheus-tools&var-namespace=tool-tool-watch
+
 
 ### Connecting to prod env
 
@@ -141,11 +105,15 @@ Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/ToolsDB#Steps_to_cr
 
 Check for <user>__toolwatchDB <- this is the production DB name.
 
-### Kubernetes dashboard
+### Backup DB
 
-https://k8s-status.toolforge.org/namespaces/tool-tool-watch/
+To backup the database, run:
 
-### Deployment/Logs/Debugging
+```sh
+mariadb-dump --defaults-file=$(pwd)/replica.my.cnf --skip-ssl -h 0.0.0.0 -P 3307 s55491__toolwatch > backup.sql
+```
+
+### Deployment
 
 ```
 ssh <username>@login.toolforge.org
@@ -176,7 +144,7 @@ pip install -r requirements.txt
 
 Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/Web/Python#Creating_a_virtual_environment
 
-#### Webservice (Django app) deployment
+#### Webservice (Django app) Deployment
 
 1. Build the docker image
 
@@ -208,11 +176,43 @@ To check the status of webservice, run:
 toolforge webservices status
 ```
 
-#### Job (Crawler job) deployment
-
+#### Crawler Job Deployment
 First update the kubernetes cluster with the updated code. Job pod is dependent on webservice pod, so make sure webservice pod is up and running.
 
-If job fails, check the logs using
+Create the job using:
+```sh
+toolforge jobs run periodic-crawl --command "daily_crawl" --image "tool-tool-watch/tool-tool-watch:latest" --schedule "@daily" --mount=all --emails=onfailure
+```
+The above creates a cron-job that runs the fetches the status of the tools every day.
+
+
+### Debugging
+- To debug the production container locally, run:
+
+```sh
+docker run -ti -u 0 --entrypoint bash tools-harbor.wmcloud.org/tool-tool-watch/tool-tool-watch:latest
+```
+
+- View job logs:
+
+```sh
+toolforge jobs logs -f special-restart-crawl
+```
+
+- List of jobs:
+
+```sh
+toolforge jobs list
+```
+
+- Restart Toolforge web services:
+
+```sh
+toolforge webservices restart
+```
+
+#### Logs
+If the job fails, check the logs using
 
 ```
 toolforge jobs logs <job name>
@@ -233,3 +233,7 @@ toolforge jobs restart <job name>
 ```
 
 Ref link: https://wikitech.wikimedia.org/wiki/Help:Toolforge/Running_jobs#Restarting_your_jobs
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
