@@ -75,6 +75,11 @@ Contributions are welcome! If you find any issues or have suggestions for improv
 
 ## Maintainers Section
 
+### Dashboards
+
+Kubernetes: https://k8s-status.toolforge.org/namespaces/tool-tool-watch/<br>
+Grafana: https://grafana.wmcloud.org/d/TJuKfnt4z/kubernetes-namespace?orgId=1&var-cluster=prometheus-tools&var-namespace=tool-tool-watch
+
 ### Connecting to prod env
 
 ```
@@ -102,15 +107,10 @@ Check for <user>__toolwatchDB <- this is the production DB name.
 ### Backup DB
 
 To backup the database, run:
-
+                                 
 ```sh
 mariadb-dump --defaults-file=$(pwd)/replica.my.cnf --skip-ssl -h 0.0.0.0 -P 3307 s55491__toolwatch > backup.sql
 ```
-
-### Dashboards
-
-Kubernetes: https://k8s-status.toolforge.org/namespaces/tool-tool-watch/<br>
-Grafana: https://grafana.wmcloud.org/d/TJuKfnt4z/kubernetes-namespace?orgId=1&var-cluster=prometheus-tools&var-namespace=tool-tool-watch
 
 ### Deployment
 
